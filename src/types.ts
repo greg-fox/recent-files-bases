@@ -7,4 +7,3 @@ export interface RecentFileEntry {
 export interface PluginData {
 	recentFiles: RecentFileEntry[];
 }
-

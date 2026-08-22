@@ -1,90 +1,43 @@
-# Obsidian Sample Plugin
+# Recent Files Bases
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+An [Obsidian](https://obsidian.md) plugin that adds a custom [Bases](https://help.obsidian.md/bases) view listing your recently opened files, in list format.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## What it does
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+The plugin tracks the files you open (or, optionally, edit) in a small internal list, most-recent-first. It registers a new Bases view type, **Recent files**, that you can select from the view menu of any `.base` file. That view:
 
-## First time developing plugins?
+- Shows only files that are both in your recent list **and** pass the Base's own filters. Point a Base at a folder, tag, or property filter, add the Recent files view, and you get a recency-ordered list scoped to that filter.
+- Sorts strictly by recency, most recent first, regardless of the Base's configured sort.
+- Displays whichever properties you've selected in the Base's Properties menu, same as other Bases views.
+- Supports a per-view **Max items** slider (view options, top-right of the Bases toolbar) to cap how many entries are shown.
+- Links open on click; Cmd/Ctrl-click (or middle-click) opens in a new tab, and hovering shows Obsidian's native link preview.
 
-Quick starting guide for new plugin devs:
+The plugin does not write anything to your notes. Recency is tracked internally in the plugin's own data file, not in file frontmatter.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+## Settings
 
-## Releasing new releases
+- **Max tracked files** — how many recently opened files the plugin remembers in total.
+- **Track recency on** — update the list when a file is opened, or when its content changes.
+- **Omitted path patterns** / **Omitted tag patterns** — regular expressions (one per line); matching files are never tracked.
+- **Omit bookmarked files** — skip files that are bookmarked.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+## Development
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+```bash
+npm install
+npm run dev      # watch mode
+npm run build    # typecheck + production bundle
+npm run lint
+npm run test          # unit tests
+npm run test:coverage # unit tests with coverage report
 ```
 
-If you have multiple URLs, you can also do:
+Source lives in `src/`. Pure logic (the recency store, exclusion rules, tag/bookmark lookups, recency ordering) is split out from the Obsidian-runtime glue (`main.ts`, `src/ui/`, `src/bases/recentFilesBasesView.ts`) so it can be unit tested outside a live Obsidian instance; the runtime-glue files are excluded from the coverage report for the same reason (see `vitest.config.ts`).
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+## Manually installing
 
-## API Documentation
+Copy `main.js`, `styles.css`, and `manifest.json` to `<Vault>/.obsidian/plugins/recent-files-bases/`, then enable the plugin under **Settings → Community plugins**.
 
-See https://docs.obsidian.md
+## Prior art
+
+[recent-files-obsidian](https://github.com/tgrosinger/recent-files-obsidian) provides a similar recent-files list as a sidebar panel rather than a Bases view; its settings shape (path/tag/bookmark exclusion, open-vs-edit tracking) informed this plugin's settings.

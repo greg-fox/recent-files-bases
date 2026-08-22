@@ -1,8 +1,50 @@
-/*
+.recent-files-bases-view {
+	padding: var(--size-4-2);
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.recent-files-bases-group-title {
+	font-weight: var(--font-medium);
+	color: var(--text-muted);
+	margin: var(--size-4-2) 0 var(--size-4-1);
+}
 
-If your plugin does not need CSS, delete this file.
+.recent-files-bases-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
 
-*/
+.recent-files-bases-item {
+	display: flex;
+	align-items: baseline;
+	gap: var(--size-4-1);
+	padding: var(--size-2-1) var(--size-2-2);
+	border-radius: var(--radius-s);
+}
+
+.recent-files-bases-item:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.recent-files-bases-link {
+	color: var(--text-normal);
+	text-decoration: none;
+}
+
+.recent-files-bases-link:hover {
+	text-decoration: underline;
+}
+
+.recent-files-bases-property {
+	color: var(--text-muted);
+	font-size: var(--font-smaller);
+}
+
+.recent-files-bases-separator {
+	color: var(--text-faint);
+}
+
+.recent-files-bases-empty {
+	color: var(--text-muted);
+	padding: var(--size-4-2);
+}

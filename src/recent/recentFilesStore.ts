@@ -5,6 +5,7 @@ export interface RecentFilesStoreOptions {
 	nowMs?: () => number;
 }
 
+/** Maintains the most-recent-first list of tracked files, deduped by path. */
 export class RecentFilesStore {
 	private readonly maxLength: number;
 	private readonly nowMs: () => number;
@@ -31,4 +32,3 @@ export class RecentFilesStore {
 		return entries.map((e) => (e.path === oldPath ? { ...e, path: newPath, basename: newBasename } : e));
 	}
 }
-

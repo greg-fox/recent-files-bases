@@ -1,17 +1,24 @@
-import { Plugin, type TAbstractFile, type TFile } from "obsidian";
+import { Plugin, TFile, type TAbstractFile } from "obsidian";
 import { createRecentFilesBasesViewRegistration, RECENT_FILES_BASES_VIEW_TYPE } from "./bases/recentFilesBasesView";
-import { DEFAULT_SETTINGS, type RecentFilesBasesSettings, RecentFilesBasesSettingTab } from "./settings";
-import type { PluginData } from "./types";
-import { stampFrontmatterOpenedAt } from "./recent/frontmatterStamp";
+import { DEFAULT_SETTINGS, type RecentFilesBasesSettings } from "./settings";
+import { RecentFilesBasesSettingTab } from "./ui/settingsTab";
 import { RecentFilesStore } from "./recent/recentFilesStore";
+import { isExcluded } from "./recent/exclusionRules";
+import { getFileTags } from "./recent/tags";
+import { getBookmarkedPaths } from "./recent/bookmarks";
+import type { PluginData } from "./types";
 
 const DEFAULT_DATA: PluginData = {
 	recentFiles: [],
 };
 
+const EDIT_TRACKING_DEBOUNCE_MS = 2000;
+
 export default class RecentFilesBasesPlugin extends Plugin {
 	settings: RecentFilesBasesSettings;
 	data: PluginData;
+
+	private readonly editDebounceTimers = new Map<string, number>();
 
 	async onload() {
 		await this.loadPluginState();
@@ -20,37 +27,17 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		this.registerRecentFilesBasesView();
 
 		this.registerEvent(this.app.workspace.on("file-open", this.onFileOpen));
+		this.registerEvent(this.app.vault.on("modify", this.onFileModify));
 		this.registerEvent(this.app.vault.on("rename", this.onFileRename));
 		this.registerEvent(this.app.vault.on("delete", this.onFileDelete));
 	}
 
-	onunload() {}
-
-	private readonly onFileOpen = async (file: TFile | null) => {
-		if (!file) return;
-
-		const store = new RecentFilesStore({ maxLength: this.settings.maxRecentFiles });
-		this.data.recentFiles = store.add(this.data.recentFiles, file);
-		await this.savePluginState();
-
-		if (this.settings.stampFrontmatterOnOpen && file.extension === "md") {
-			await stampFrontmatterOpenedAt(this.app, file, this.settings.frontmatterKey, Date.now());
+	onunload() {
+		for (const timer of this.editDebounceTimers.values()) {
+			window.clearTimeout(timer);
 		}
-	};
-
-	private readonly onFileRename = async (file: TAbstractFile, oldPath: string) => {
-		// TAbstractFile doesn't expose basename in the same shape, so derive it.
-		const newBasename = file.name.replace(/\.[^/.]+$/, "");
-		const store = new RecentFilesStore({ maxLength: this.settings.maxRecentFiles });
-		this.data.recentFiles = store.rename(this.data.recentFiles, oldPath, file.path, newBasename);
-		await this.savePluginState();
-	};
-
-	private readonly onFileDelete = async (file: TAbstractFile) => {
-		const store = new RecentFilesStore({ maxLength: this.settings.maxRecentFiles });
-		this.data.recentFiles = store.remove(this.data.recentFiles, file.path);
-		await this.savePluginState();
-	};
+		this.editDebounceTimers.clear();
+	}
 
 	async loadPluginState() {
 		const loaded = (await this.loadData()) as Partial<{ settings: RecentFilesBasesSettings; data: PluginData }> | null;
@@ -66,14 +53,75 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		await this.savePluginState();
 	}
 
-	private registerRecentFilesBasesView() {
-		// Bases views require Obsidian 1.10+. If the API isn't present at runtime, do nothing.
-		if (!("registerBasesView" in this) || typeof this.registerBasesView !== "function") return;
+	/** Drops tracked files that no longer pass the current exclusion settings. Called from the settings tab. */
+	async pruneExcludedFiles() {
+		this.data.recentFiles = this.data.recentFiles.filter((tracked) => {
+			const file = this.app.vault.getFileByPath(tracked.path);
+			if (!file) return true; // Deletion is handled by the delete event, not here.
+			return !this.isFileExcluded(file);
+		});
+		await this.savePluginState();
+	}
 
-		// Call on `this` directly so Plugin internals are bound correctly.
+	private readonly onFileOpen = async (file: TFile | null) => {
+		if (!file || this.settings.updateOn !== "file-open") return;
+		await this.trackFile(file);
+	};
+
+	private readonly onFileModify = (file: TAbstractFile) => {
+		if (this.settings.updateOn !== "file-edit" || !(file instanceof TFile)) return;
+
+		const existingTimer = this.editDebounceTimers.get(file.path);
+		if (existingTimer !== undefined) window.clearTimeout(existingTimer);
+
+		const timer = window.setTimeout(() => {
+			this.editDebounceTimers.delete(file.path);
+			void this.trackFile(file);
+		}, EDIT_TRACKING_DEBOUNCE_MS);
+		this.editDebounceTimers.set(file.path, timer);
+	};
+
+	private readonly onFileRename = async (file: TAbstractFile, oldPath: string) => {
+		const newBasename = file.name.replace(/\.[^/.]+$/, "");
+		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
+		this.data.recentFiles = store.rename(this.data.recentFiles, oldPath, file.path, newBasename);
+		await this.savePluginState();
+	};
+
+	private readonly onFileDelete = async (file: TAbstractFile) => {
+		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
+		this.data.recentFiles = store.remove(this.data.recentFiles, file.path);
+		await this.savePluginState();
+	};
+
+	private readonly trackFile = async (file: TFile) => {
+		if (this.isFileExcluded(file)) return;
+
+		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
+		this.data.recentFiles = store.add(this.data.recentFiles, file);
+		await this.savePluginState();
+	};
+
+	private isFileExcluded(file: TFile): boolean {
+		return isExcluded(
+			{
+				path: file.path,
+				tags: getFileTags(this.app, file),
+				isBookmarked: getBookmarkedPaths(this.app).has(file.path),
+			},
+			this.settings,
+		);
+	}
+
+	private registerRecentFilesBasesView() {
+		if (typeof this.registerBasesView !== "function") {
+			console.warn("Recent Files Bases: registerBasesView is unavailable; this plugin requires Obsidian 1.10+.");
+			return;
+		}
+
 		this.registerBasesView(
 			RECENT_FILES_BASES_VIEW_TYPE,
-			createRecentFilesBasesViewRegistration(() => new Set(this.data.recentFiles.map((file) => file.path))),
+			createRecentFilesBasesViewRegistration(() => this.data.recentFiles),
 		);
 	}
 }

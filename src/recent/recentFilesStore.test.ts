@@ -47,5 +47,18 @@ describe("RecentFilesStore", () => {
 		const renamed = store.rename(entries, "a.md", "renamed.md", "renamed");
 		expect(renamed).toEqual([{ path: "renamed.md", basename: "renamed", openedAtMs: 1 }]);
 	});
-});
 
+	it("leaves other entries untouched when renaming a path that isn't tracked", () => {
+		const store = new RecentFilesStore({ maxLength: 10, nowMs: () => 1 });
+		const entries: RecentFileEntry[] = [{ path: "a.md", basename: "a", openedAtMs: 1 }];
+
+		const renamed = store.rename(entries, "missing.md", "renamed.md", "renamed");
+		expect(renamed).toEqual(entries);
+	});
+
+	it("uses Date.now by default when nowMs is not provided", () => {
+		const store = new RecentFilesStore({ maxLength: 10 });
+		const entries = store.add([], { path: "a.md", basename: "a" });
+		expect(entries[0]?.openedAtMs).toBeGreaterThan(0);
+	});
+});
