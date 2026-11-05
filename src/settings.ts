@@ -18,7 +18,7 @@ export interface RecentFilesBasesSettings {
 }
 
 export const DEFAULT_SETTINGS: RecentFilesBasesSettings = {
-	maxTrackedFiles: 50,
+	maxTrackedFiles: 500,
 	updateOn: "file-open",
 	omittedPathPatterns: [],
 	omittedTagPatterns: [],
