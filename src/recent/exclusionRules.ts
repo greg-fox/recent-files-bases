@@ -10,6 +10,13 @@ export interface ExclusionRules {
 	omitBookmarkedFiles: boolean;
 }
 
+/** Exclusion rules with their regex patterns compiled once, ready for repeated matching. */
+export interface CompiledExclusionRules {
+	pathRegexes: RegExp[];
+	tagRegexes: RegExp[];
+	omitBookmarkedFiles: boolean;
+}
+
 function toValidRegexes(patterns: string[]): RegExp[] {
 	const regexes: RegExp[] = [];
 	for (const pattern of patterns) {
@@ -24,17 +31,33 @@ function toValidRegexes(patterns: string[]): RegExp[] {
 	return regexes;
 }
 
+/** Compiles settings into reusable regexes. Call when settings change, not per file. */
+export function compileExclusionRules(rules: ExclusionRules): CompiledExclusionRules {
+	return {
+		pathRegexes: toValidRegexes(rules.omittedPathPatterns),
+		tagRegexes: toValidRegexes(rules.omittedTagPatterns),
+		omitBookmarkedFiles: rules.omitBookmarkedFiles,
+	};
+}
+
+/** Returns the non-blank patterns that are not valid regular expressions, for settings feedback. */
+export function findInvalidPatterns(patterns: string[]): string[] {
+	return patterns
+		.map((pattern) => pattern.trim())
+		.filter((pattern) => {
+			if (!pattern) return false;
+			try {
+				new RegExp(pattern);
+				return false;
+			} catch {
+				return true;
+			}
+		});
+}
+
 /** Whether a candidate file should be kept out of the tracked recent-files list. */
-export function isExcluded(candidate: ExclusionCandidate, rules: ExclusionRules): boolean {
+export function isExcluded(candidate: ExclusionCandidate, rules: CompiledExclusionRules): boolean {
 	if (rules.omitBookmarkedFiles && candidate.isBookmarked) return true;
-
-	const pathPatterns = toValidRegexes(rules.omittedPathPatterns);
-	if (pathPatterns.some((re) => re.test(candidate.path))) return true;
-
-	const tagPatterns = toValidRegexes(rules.omittedTagPatterns);
-	if (tagPatterns.length > 0 && candidate.tags.some((tag) => tagPatterns.some((re) => re.test(tag)))) {
-		return true;
-	}
-
-	return false;
+	if (rules.pathRegexes.some((re) => re.test(candidate.path))) return true;
+	return rules.tagRegexes.length > 0 && candidate.tags.some((tag) => rules.tagRegexes.some((re) => re.test(tag)));
 }

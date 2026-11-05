@@ -1,3 +1,7 @@
+# Development log
+
+Working notes from building the plugin, kept for reference. For user-facing release notes, see [CHANGELOG.md](../CHANGELOG.md).
+
 ## 2026-03-26 22:26
 
 - Initialized work log for the plugin.

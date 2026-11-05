@@ -24,6 +24,11 @@ export class RecentFilesStore {
 		return next.slice(0, this.maxLength);
 	}
 
+	/** Drops entries beyond `maxLength`, e.g. after the setting is lowered. */
+	public trim(entries: RecentFileEntry[]): RecentFileEntry[] {
+		return entries.length > this.maxLength ? entries.slice(0, this.maxLength) : entries;
+	}
+
 	public remove(entries: RecentFileEntry[], path: string): RecentFileEntry[] {
 		return entries.filter((e) => e.path !== path);
 	}

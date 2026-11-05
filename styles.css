@@ -48,3 +48,19 @@
 	color: var(--text-muted);
 	padding: var(--size-4-2);
 }
+
+.recent-files-bases-invalid-pattern {
+	color: var(--text-error);
+	margin-top: var(--size-4-1);
+}
+
+.recent-files-bases-last-opened {
+	margin-left: auto;
+	color: var(--text-faint);
+	font-size: var(--font-smaller);
+	white-space: nowrap;
+}
+
+.recent-files-bases-item-clickable {
+	cursor: var(--cursor-link);
+}

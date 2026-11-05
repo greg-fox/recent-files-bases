@@ -37,4 +37,32 @@ describe("getFileTags", () => {
 		const cache = { frontmatter: { tags: "project" }, tags: [{ tag: "#todo" }, { tag: "#urgent" }] };
 		expect(getFileTags(fakeApp(cache), file)).toEqual(["project", "todo", "urgent"]);
 	});
+
+	it("splits a comma-separated frontmatter string", () => {
+		expect(getFileTags(fakeApp({ frontmatter: { tags: "project, todo" } }), file)).toEqual(["project", "todo"]);
+	});
+
+	it("splits a space-separated frontmatter string", () => {
+		expect(getFileTags(fakeApp({ frontmatter: { tags: "project todo" } }), file)).toEqual(["project", "todo"]);
+	});
+
+	it("strips a leading # from frontmatter tags", () => {
+		expect(getFileTags(fakeApp({ frontmatter: { tags: ["#project", "todo"] } }), file)).toEqual([
+			"project",
+			"todo",
+		]);
+	});
+
+	it("reads the singular `tag` frontmatter key", () => {
+		expect(getFileTags(fakeApp({ frontmatter: { tag: "project" } }), file)).toEqual(["project"]);
+	});
+
+	it("de-duplicates tags present in both frontmatter and body", () => {
+		const cache = { frontmatter: { tags: ["todo"] }, tags: [{ tag: "#todo" }] };
+		expect(getFileTags(fakeApp(cache), file)).toEqual(["todo"]);
+	});
+
+	it("ignores null frontmatter tags", () => {
+		expect(getFileTags(fakeApp({ frontmatter: { tags: null } }), file)).toEqual([]);
+	});
 });

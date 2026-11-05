@@ -1,24 +1,22 @@
 import { Plugin, TFile, type TAbstractFile } from "obsidian";
 import { createRecentFilesBasesViewRegistration, RECENT_FILES_BASES_VIEW_TYPE } from "./bases/recentFilesBasesView";
-import { DEFAULT_SETTINGS, type RecentFilesBasesSettings } from "./settings";
+import type { RecentFilesBasesSettings } from "./settings";
+import { sanitizePluginData, sanitizeSettings } from "./persistence";
 import { RecentFilesBasesSettingTab } from "./ui/settingsTab";
 import { RecentFilesStore } from "./recent/recentFilesStore";
-import { isExcluded } from "./recent/exclusionRules";
+import { compileExclusionRules, isExcluded, type CompiledExclusionRules } from "./recent/exclusionRules";
 import { getFileTags } from "./recent/tags";
 import { getBookmarkedPaths } from "./recent/bookmarks";
-import type { PluginData } from "./types";
+import type { PluginData, RecentFileEntry } from "./types";
 import { ChangeNotifier } from "./utils/changeNotifier";
-
-const DEFAULT_DATA: PluginData = {
-	recentFiles: [],
-};
 
 const EDIT_TRACKING_DEBOUNCE_MS = 2000;
 
 export default class RecentFilesBasesPlugin extends Plugin {
-	settings: RecentFilesBasesSettings;
-	data: PluginData;
+	settings: RecentFilesBasesSettings = sanitizeSettings(undefined);
+	data: PluginData = sanitizePluginData(undefined);
 
+	private compiledRules: CompiledExclusionRules | null = null;
 	private readonly editDebounceTimers = new Map<string, number>();
 	private readonly recentFilesChanged = new ChangeNotifier();
 
@@ -42,9 +40,9 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	}
 
 	async loadPluginState() {
-		const loaded = (await this.loadData()) as Partial<{ settings: RecentFilesBasesSettings; data: PluginData }> | null;
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded?.settings ?? {});
-		this.data = Object.assign({}, DEFAULT_DATA, loaded?.data ?? {});
+		const loaded = (await this.loadData()) as Partial<{ settings: unknown; data: unknown }> | null;
+		this.settings = sanitizeSettings(loaded?.settings);
+		this.data = sanitizePluginData(loaded?.data);
 	}
 
 	async savePluginState() {
@@ -54,21 +52,34 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	/** Persists state and tells any open Recent files views to re-render. */
 	private async commitRecentFiles() {
 		this.recentFilesChanged.notify();
-		await this.commitRecentFiles();
+		await this.savePluginState();
 	}
 
 	async saveSettings() {
+		this.compiledRules = null; // Recompile on next use.
+		// Exclusion settings change what the views show, so refresh them too.
 		await this.commitRecentFiles();
 	}
 
-	/** Drops tracked files that no longer pass the current exclusion settings. Called from the settings tab. */
-	async pruneExcludedFiles() {
-		this.data.recentFiles = this.data.recentFiles.filter((tracked) => {
+	/** Applies a changed "Max tracked files" setting immediately instead of on the next open. */
+	async setMaxTrackedFiles(maxTrackedFiles: number) {
+		this.settings.maxTrackedFiles = maxTrackedFiles;
+		const store = new RecentFilesStore({ maxLength: maxTrackedFiles });
+		this.data.recentFiles = store.trim(this.data.recentFiles);
+		await this.commitRecentFiles();
+	}
+
+	/**
+	 * The tracked list with the current exclusion rules applied. Exclusions are applied
+	 * at read time rather than by deleting stored entries, so editing a pattern (including
+	 * a half-typed one like "." that matches everything) never destroys history.
+	 */
+	getVisibleRecentFiles(): RecentFileEntry[] {
+		return this.data.recentFiles.filter((tracked) => {
 			const file = this.app.vault.getFileByPath(tracked.path);
 			if (!file) return true; // Deletion is handled by the delete event, not here.
 			return !this.isFileExcluded(file);
 		});
-		await this.commitRecentFiles();
 	}
 
 	private readonly onFileOpen = async (file: TFile | null) => {
@@ -78,6 +89,9 @@ export default class RecentFilesBasesPlugin extends Plugin {
 
 	private readonly onFileModify = (file: TAbstractFile) => {
 		if (this.settings.updateOn !== "file-edit" || !(file instanceof TFile)) return;
+		// "modify" also fires for Sync, other plugins, and background writes. Only count edits
+		// to the file the user is actually looking at.
+		if (file !== this.app.workspace.getActiveFile()) return;
 
 		const existingTimer = this.editDebounceTimers.get(file.path);
 		if (existingTimer !== undefined) window.clearTimeout(existingTimer);
@@ -89,7 +103,13 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		this.editDebounceTimers.set(file.path, timer);
 	};
 
+	private isTracked(path: string): boolean {
+		return this.data.recentFiles.some((tracked) => tracked.path === path);
+	}
+
 	private readonly onFileRename = async (file: TAbstractFile, oldPath: string) => {
+		// Folder deletes/renames emit one event per file; only touch disk when it matters.
+		if (!this.isTracked(oldPath)) return;
 		const newBasename = file.name.replace(/\.[^/.]+$/, "");
 		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
 		this.data.recentFiles = store.rename(this.data.recentFiles, oldPath, file.path, newBasename);
@@ -97,9 +117,10 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	};
 
 	private readonly onFileDelete = async (file: TAbstractFile) => {
+		if (!this.isTracked(file.path)) return;
 		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
 		this.data.recentFiles = store.remove(this.data.recentFiles, file.path);
-		await this.savePluginState();
+		await this.commitRecentFiles();
 	};
 
 	private readonly trackFile = async (file: TFile) => {
@@ -107,17 +128,20 @@ export default class RecentFilesBasesPlugin extends Plugin {
 
 		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
 		this.data.recentFiles = store.add(this.data.recentFiles, file);
-		await this.savePluginState();
+		await this.commitRecentFiles();
 	};
 
 	private isFileExcluded(file: TFile): boolean {
+		this.compiledRules ??= compileExclusionRules(this.settings);
+		const rules = this.compiledRules;
 		return isExcluded(
 			{
 				path: file.path,
-				tags: getFileTags(this.app, file),
-				isBookmarked: getBookmarkedPaths(this.app).has(file.path),
+				tags: rules.tagRegexes.length > 0 ? getFileTags(this.app, file) : [],
+				// Walking the bookmark tree is only worth doing when the setting is on.
+				isBookmarked: rules.omitBookmarkedFiles && getBookmarkedPaths(this.app).has(file.path),
 			},
-			this.settings,
+			rules,
 		);
 	}
 
@@ -130,7 +154,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		this.registerBasesView(
 			RECENT_FILES_BASES_VIEW_TYPE,
 			createRecentFilesBasesViewRegistration({
-				getRecentFiles: () => this.data.recentFiles,
+				getRecentFiles: () => this.getVisibleRecentFiles(),
 				subscribe: (listener) => this.recentFilesChanged.subscribe(listener),
 			}),
 		);

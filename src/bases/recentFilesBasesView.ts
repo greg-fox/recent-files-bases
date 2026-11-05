@@ -3,9 +3,13 @@ import type { BasesEntry, BasesPropertyId, BasesViewRegistration, HoverParent, H
 import type { RecentFileEntry } from "../types";
 import type { Unsubscribe } from "../utils/changeNotifier";
 import { orderByRecency } from "./orderByRecency";
+import { makeFileDraggable, showFileMenu } from "../ui/fileInteractions";
+import { formatRelativeTime } from "./relativeTime";
 import { DEFAULT_MAX_ITEMS, MAX_ITEMS_OPTION_KEY, MAX_MAX_ITEMS, MIN_MAX_ITEMS, resolveMaxItems } from "./maxItemsOption";
 
 export const RECENT_FILES_BASES_VIEW_TYPE = "recent-files-list";
+
+const SHOW_LAST_OPENED_OPTION_KEY = "showLastOpened";
 
 const DEFAULT_PROPERTIES: BasesPropertyId[] = ["file.name"];
 
@@ -25,11 +29,17 @@ export function createRecentFilesBasesViewRegistration(source: RecentFilesSource
 			{
 				type: "slider",
 				key: MAX_ITEMS_OPTION_KEY,
-				displayName: "Max items",
+				displayName: "Max items per group",
 				default: DEFAULT_MAX_ITEMS,
 				min: MIN_MAX_ITEMS,
 				max: MAX_MAX_ITEMS,
 				step: 1,
+			},
+			{
+				type: "toggle",
+				key: SHOW_LAST_OPENED_OPTION_KEY,
+				displayName: "Show last opened",
+				default: false,
 			},
 		],
 	};
@@ -63,6 +73,9 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 		const recentFiles = this.source.getRecentFiles();
 		const order = this.config.getOrder();
 		const properties: BasesPropertyId[] = order.length > 0 ? order : DEFAULT_PROPERTIES;
+		const showLastOpened = this.config.get(SHOW_LAST_OPENED_OPTION_KEY) === true;
+		const openedAtByPath = new Map(recentFiles.map((recent) => [recent.path, recent.openedAtMs]));
+		const nowMs = Date.now();
 
 		let renderedAnyGroup = false;
 
@@ -78,7 +91,15 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 
 			const listEl = groupEl.createEl("ul", { cls: "recent-files-bases-list" });
 			for (const entry of matches) {
-				this.renderEntry(listEl, entry, properties);
+				const itemEl = this.renderEntry(listEl, entry, properties);
+				const openedAtMs = openedAtByPath.get(entry.file.path);
+				if (showLastOpened && openedAtMs !== undefined) {
+					itemEl.createSpan({
+						cls: "recent-files-bases-last-opened",
+						text: formatRelativeTime(openedAtMs, nowMs),
+						attr: { title: new Date(openedAtMs).toLocaleString() },
+					});
+				}
 			}
 		}
 
@@ -90,9 +111,11 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 		}
 	}
 
-	private renderEntry(listEl: HTMLElement, entry: BasesEntry, properties: BasesPropertyId[]): void {
+	private renderEntry(listEl: HTMLElement, entry: BasesEntry, properties: BasesPropertyId[]): HTMLElement {
 		const { app } = this;
 		const itemEl = listEl.createEl("li", { cls: "recent-files-bases-item" });
+		itemEl.addEventListener("contextmenu", (evt) => showFileMenu(app, entry.file, evt));
+		makeFileDraggable(app, itemEl, entry.file);
 
 		let renderedAny = false;
 		for (const propertyId of properties) {
@@ -104,11 +127,20 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 					text: entry.file.basename,
 					href: "#",
 				});
-				linkEl.addEventListener("click", (evt) => {
-					if (evt.button !== 0 && evt.button !== 1) return;
+				const openFromEvent = (evt: MouseEvent) => {
 					evt.preventDefault();
-					const newLeaf = Keymap.isModEvent(evt);
+					// Middle-click always opens a new tab; otherwise honour Cmd/Ctrl modifiers.
+					const newLeaf = evt.button === 1 ? "tab" : Keymap.isModEvent(evt);
 					void app.workspace.openLinkText(entry.file.path, "", newLeaf);
+				};
+				linkEl.addEventListener("click", (evt) => {
+					if (evt.button !== 0) return;
+					openFromEvent(evt);
+				});
+				// Browsers do not fire "click" for the middle button; they fire "auxclick".
+				linkEl.addEventListener("auxclick", (evt) => {
+					if (evt.button !== 1) return;
+					openFromEvent(evt);
 				});
 				linkEl.addEventListener("mouseover", (evt) => {
 					app.workspace.trigger("hover-link", {
@@ -129,12 +161,27 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 			if (renderedAny) {
 				itemEl.createSpan({ cls: "recent-files-bases-separator", text: " · " });
 			}
-			itemEl.createSpan({ cls: "recent-files-bases-property", text: value.toString() });
+			// renderTo gives links, tags, lists, and dates the same rendering as the built-in views.
+			const propertyEl = itemEl.createSpan({ cls: "recent-files-bases-property" });
+			value.renderTo(propertyEl, app.renderContext);
 			renderedAny = true;
 		}
 
 		if (!renderedAny) {
 			itemEl.setText(entry.file.basename);
 		}
+
+		// Without a file name column there is no link to click, so make the whole row open the file.
+		if (!properties.includes("file.name")) {
+			itemEl.addClass("recent-files-bases-item-clickable");
+			itemEl.addEventListener("click", (evt) => {
+				if (evt.button !== 0) return;
+				// Leave clicks on links rendered inside property values to those links.
+				if (evt.target instanceof Element && evt.target.closest("a")) return;
+				void app.workspace.openLinkText(entry.file.path, "", Keymap.isModEvent(evt));
+			});
+		}
+
+		return itemEl;
 	}
 }
