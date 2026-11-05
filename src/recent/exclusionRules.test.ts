@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isExcluded, type ExclusionRules } from "./exclusionRules";
+import { findInvalidPatterns, isExcluded, type ExclusionRules } from "./exclusionRules";
 
 const noRules: ExclusionRules = {
 	omittedPathPatterns: [],
@@ -45,5 +45,15 @@ describe("isExcluded", () => {
 	it("ignores blank pattern lines", () => {
 		const rules = { ...noRules, omittedPathPatterns: ["", "   "] };
 		expect(isExcluded({ path: "a.md", tags: [], isBookmarked: false }, rules)).toBe(false);
+	});
+});
+
+describe("findInvalidPatterns", () => {
+	it("returns only the patterns that fail to compile", () => {
+		expect(findInvalidPatterns(["^daily/", "[", "(", "ok$"])).toEqual(["[", "("]);
+	});
+
+	it("ignores blank lines", () => {
+		expect(findInvalidPatterns(["", "   "])).toEqual([]);
 	});
 });
