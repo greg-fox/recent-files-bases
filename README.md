@@ -20,7 +20,6 @@ The plugin does not write anything to your notes. Recency is tracked internally 
 - **Max tracked files** — how many recently opened files the plugin remembers in total (default 500). Every Base filters this one shared list, so a Base scoped to a single folder shows only the tracked files in that folder, which can be fewer than its **Max items** slider allows.
 - **Track recency on** — update the list when a file is opened, or when its content changes.
 - **Omitted path patterns** / **Omitted tag patterns** — regular expressions (one per line); matching files are never tracked.
-- **Omit bookmarked files** — skip files that are bookmarked.
 
 ## Development
 
@@ -33,7 +32,7 @@ npm run test          # unit tests
 npm run test:coverage # unit tests with coverage report
 ```
 
-Source lives in `src/`. Pure logic (the recency store, exclusion rules, tag/bookmark lookups, recency ordering) is split out from the Obsidian-runtime glue. `main.ts` is tested against a small runtime stub of the `obsidian` package (`src/__mocks__/obsidian.ts`, aliased in `vitest.config.ts`), since the real package ships type definitions only. The DOM-rendering files (`src/ui/`, `src/bases/recentFilesBasesView.ts`) are excluded from the coverage report.
+Source lives in `src/`. Pure logic (the recency store, exclusion rules, tag lookups, recency ordering) is split out from the Obsidian-runtime glue. `main.ts` is tested against a small runtime stub of the `obsidian` package (`src/__mocks__/obsidian.ts`, aliased in `vitest.config.ts`), since the real package ships type definitions only. The DOM-rendering files (`src/ui/`, `src/bases/recentFilesBasesView.ts`) are excluded from the coverage report.
 
 ## Manually installing
 
@@ -41,4 +40,4 @@ Copy `main.js`, `styles.css`, and `manifest.json` to `<Vault>/.obsidian/plugins/
 
 ## Prior art
 
-[recent-files-obsidian](https://github.com/tgrosinger/recent-files-obsidian) provides a similar recent-files list as a sidebar panel rather than a Bases view; its settings shape (path/tag/bookmark exclusion, open-vs-edit tracking) informed this plugin's settings.
+[recent-files-obsidian](https://github.com/tgrosinger/recent-files-obsidian) provides a similar recent-files list as a sidebar panel rather than a Bases view; its settings shape (path and tag exclusion, open-vs-edit tracking) informed this plugin's settings.

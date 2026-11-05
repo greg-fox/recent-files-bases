@@ -1,68 +1,47 @@
-import { describe, expect, it } from "vitest";
-import type { App, TFile } from "obsidian";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import * as obsidian from "obsidian";
+import type { App, CachedMetadata, TFile } from "obsidian";
 import { getFileTags } from "./tags";
 
-function fakeApp(fileCache: unknown): App {
-	return {
-		metadataCache: {
-			getFileCache: () => fileCache,
-		},
-	} as unknown as App;
+// Frontmatter parsing is Obsidian's job (getAllTags); these tests cover only what this module adds.
+const getAllTags = vi.spyOn(obsidian, "getAllTags");
+
+function fakeApp(fileCache: CachedMetadata | null): App {
+	return { metadataCache: { getFileCache: () => fileCache } } as unknown as App;
 }
 
 // eslint-disable-next-line obsidianmd/no-tfile-tfolder-cast -- test double; getFileTags only reads app.metadataCache, never the file itself
 const file = {} as TFile;
 
+afterEach(() => {
+	getAllTags.mockReset();
+});
+
 describe("getFileTags", () => {
-	it("returns an empty array when there is no cache", () => {
+	it("returns an empty array when there is no cache, without calling getAllTags", () => {
 		expect(getFileTags(fakeApp(null), file)).toEqual([]);
+		expect(getAllTags).not.toHaveBeenCalled();
 	});
 
-	it("returns an empty array when frontmatter has no tags", () => {
-		expect(getFileTags(fakeApp({ frontmatter: {} }), file)).toEqual([]);
+	it("returns an empty array when getAllTags returns null", () => {
+		getAllTags.mockReturnValue(null);
+		expect(getFileTags(fakeApp({}), file)).toEqual([]);
 	});
 
-	it("normalizes a single string frontmatter tag into an array", () => {
-		expect(getFileTags(fakeApp({ frontmatter: { tags: "project" } }), file)).toEqual(["project"]);
+	it("passes the file cache to getAllTags", () => {
+		const cache: CachedMetadata = { frontmatter: { tags: "project" } };
+		getAllTags.mockReturnValue([]);
+		getFileTags(fakeApp(cache), file);
+		expect(getAllTags).toHaveBeenCalledWith(cache);
 	});
 
-	it("passes through an array of frontmatter tags", () => {
-		expect(getFileTags(fakeApp({ frontmatter: { tags: ["project", "todo"] } }), file)).toEqual([
-			"project",
-			"todo",
-		]);
+	it("strips the leading # from every tag", () => {
+		getAllTags.mockReturnValue(["#project", "#area/work"]);
+		expect(getFileTags(fakeApp({}), file)).toEqual(["project", "area/work"]);
 	});
 
-	it("includes inline tags with the leading # stripped", () => {
-		const cache = { frontmatter: { tags: "project" }, tags: [{ tag: "#todo" }, { tag: "#urgent" }] };
-		expect(getFileTags(fakeApp(cache), file)).toEqual(["project", "todo", "urgent"]);
-	});
-
-	it("splits a comma-separated frontmatter string", () => {
-		expect(getFileTags(fakeApp({ frontmatter: { tags: "project, todo" } }), file)).toEqual(["project", "todo"]);
-	});
-
-	it("splits a space-separated frontmatter string", () => {
-		expect(getFileTags(fakeApp({ frontmatter: { tags: "project todo" } }), file)).toEqual(["project", "todo"]);
-	});
-
-	it("strips a leading # from frontmatter tags", () => {
-		expect(getFileTags(fakeApp({ frontmatter: { tags: ["#project", "todo"] } }), file)).toEqual([
-			"project",
-			"todo",
-		]);
-	});
-
-	it("reads the singular `tag` frontmatter key", () => {
-		expect(getFileTags(fakeApp({ frontmatter: { tag: "project" } }), file)).toEqual(["project"]);
-	});
-
-	it("de-duplicates tags present in both frontmatter and body", () => {
-		const cache = { frontmatter: { tags: ["todo"] }, tags: [{ tag: "#todo" }] };
-		expect(getFileTags(fakeApp(cache), file)).toEqual(["todo"]);
-	});
-
-	it("ignores null frontmatter tags", () => {
-		expect(getFileTags(fakeApp({ frontmatter: { tags: null } }), file)).toEqual([]);
+	it("de-duplicates tags found in both frontmatter and body", () => {
+		getAllTags.mockReturnValue(["#todo", "#project", "#todo"]);
+		expect(getFileTags(fakeApp({}), file)).toEqual(["todo", "project"]);
 	});
 });

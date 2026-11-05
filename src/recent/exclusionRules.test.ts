@@ -13,47 +13,39 @@ const isExcluded = (candidate: ExclusionCandidate, rules: ExclusionRules) =>
 const noRules: ExclusionRules = {
 	omittedPathPatterns: [],
 	omittedTagPatterns: [],
-	omitBookmarkedFiles: false,
 };
 
 describe("isExcluded", () => {
 	it("is false when no rules are configured", () => {
-		expect(isExcluded({ path: "notes/a.md", tags: [], isBookmarked: false }, noRules)).toBe(false);
+		expect(isExcluded({ path: "notes/a.md", tags: [] }, noRules)).toBe(false);
 	});
 
 	it("excludes a path matching an omitted path pattern", () => {
 		const rules = { ...noRules, omittedPathPatterns: ["^daily/"] };
-		expect(isExcluded({ path: "daily/2026-08-22.md", tags: [], isBookmarked: false }, rules)).toBe(true);
-		expect(isExcluded({ path: "notes/a.md", tags: [], isBookmarked: false }, rules)).toBe(false);
+		expect(isExcluded({ path: "daily/2026-08-22.md", tags: [] }, rules)).toBe(true);
+		expect(isExcluded({ path: "notes/a.md", tags: [] }, rules)).toBe(false);
 	});
 
 	it("excludes a file whose tag matches an omitted tag pattern", () => {
 		const rules = { ...noRules, omittedTagPatterns: ["^archive$"] };
-		expect(isExcluded({ path: "a.md", tags: ["archive"], isBookmarked: false }, rules)).toBe(true);
-		expect(isExcluded({ path: "a.md", tags: ["archived"], isBookmarked: false }, rules)).toBe(false);
+		expect(isExcluded({ path: "a.md", tags: ["archive"] }, rules)).toBe(true);
+		expect(isExcluded({ path: "a.md", tags: ["archived"] }, rules)).toBe(false);
 	});
 
 	it("does not match tag patterns against unrelated tags", () => {
 		const rules = { ...noRules, omittedTagPatterns: ["^archive$"] };
-		expect(isExcluded({ path: "a.md", tags: ["project", "todo"], isBookmarked: false }, rules)).toBe(false);
-	});
-
-	it("excludes bookmarked files only when omitBookmarkedFiles is enabled", () => {
-		const rules = { ...noRules, omitBookmarkedFiles: true };
-		expect(isExcluded({ path: "a.md", tags: [], isBookmarked: true }, rules)).toBe(true);
-		expect(isExcluded({ path: "a.md", tags: [], isBookmarked: false }, rules)).toBe(false);
-		expect(isExcluded({ path: "a.md", tags: [], isBookmarked: true }, noRules)).toBe(false);
+		expect(isExcluded({ path: "a.md", tags: ["project", "todo"] }, rules)).toBe(false);
 	});
 
 	it("ignores invalid regex patterns instead of throwing", () => {
 		const rules = { ...noRules, omittedPathPatterns: ["["], omittedTagPatterns: ["("] };
-		expect(() => isExcluded({ path: "a.md", tags: ["x"], isBookmarked: false }, rules)).not.toThrow();
-		expect(isExcluded({ path: "a.md", tags: ["x"], isBookmarked: false }, rules)).toBe(false);
+		expect(() => isExcluded({ path: "a.md", tags: ["x"] }, rules)).not.toThrow();
+		expect(isExcluded({ path: "a.md", tags: ["x"] }, rules)).toBe(false);
 	});
 
 	it("ignores blank pattern lines", () => {
 		const rules = { ...noRules, omittedPathPatterns: ["", "   "] };
-		expect(isExcluded({ path: "a.md", tags: [], isBookmarked: false }, rules)).toBe(false);
+		expect(isExcluded({ path: "a.md", tags: [] }, rules)).toBe(false);
 	});
 
 	it("compiles valid patterns once and drops invalid ones", () => {

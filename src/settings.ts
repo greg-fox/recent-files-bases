@@ -12,9 +12,6 @@ export interface RecentFilesBasesSettings {
 
 	/** Regex patterns (one per line in settings UI); files with a matching tag are never tracked. */
 	omittedTagPatterns: string[];
-
-	/** If true, bookmarked files are never tracked. */
-	omitBookmarkedFiles: boolean;
 }
 
 export const DEFAULT_SETTINGS: RecentFilesBasesSettings = {
@@ -22,5 +19,4 @@ export const DEFAULT_SETTINGS: RecentFilesBasesSettings = {
 	updateOn: "file-open",
 	omittedPathPatterns: [],
 	omittedTagPatterns: [],
-	omitBookmarkedFiles: false,
 };

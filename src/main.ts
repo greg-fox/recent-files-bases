@@ -6,7 +6,6 @@ import { RecentFilesBasesSettingTab } from "./ui/settingsTab";
 import { RecentFilesStore } from "./recent/recentFilesStore";
 import { compileExclusionRules, isExcluded, type CompiledExclusionRules } from "./recent/exclusionRules";
 import { getFileTags } from "./recent/tags";
-import { getBookmarkedPaths } from "./recent/bookmarks";
 import type { PluginData, RecentFileEntry } from "./types";
 import { ChangeNotifier } from "./utils/changeNotifier";
 
@@ -138,8 +137,6 @@ export default class RecentFilesBasesPlugin extends Plugin {
 			{
 				path: file.path,
 				tags: rules.tagRegexes.length > 0 ? getFileTags(this.app, file) : [],
-				// Walking the bookmark tree is only worth doing when the setting is on.
-				isBookmarked: rules.omitBookmarkedFiles && getBookmarkedPaths(this.app).has(file.path),
 			},
 			rules,
 		);

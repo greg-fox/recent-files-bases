@@ -18,8 +18,6 @@ export function sanitizeSettings(raw: unknown): RecentFilesBasesSettings {
 		updateOn: input.updateOn === "file-edit" || input.updateOn === "file-open" ? input.updateOn : DEFAULT_SETTINGS.updateOn,
 		omittedPathPatterns: stringArray(input.omittedPathPatterns, [...DEFAULT_SETTINGS.omittedPathPatterns]),
 		omittedTagPatterns: stringArray(input.omittedTagPatterns, [...DEFAULT_SETTINGS.omittedTagPatterns]),
-		omitBookmarkedFiles:
-			typeof input.omitBookmarkedFiles === "boolean" ? input.omitBookmarkedFiles : DEFAULT_SETTINGS.omitBookmarkedFiles,
 	};
 }
 

@@ -87,15 +87,5 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 			});
 		});
 		showPatternValidity(tagSetting, tagDesc, this.plugin.settings.omittedTagPatterns);
-
-		new Setting(containerEl)
-			.setName("Omit bookmarked files")
-			.setDesc("Don't track files that are bookmarked.")
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.omitBookmarkedFiles).onChange(async (value) => {
-					this.plugin.settings.omitBookmarkedFiles = value;
-					await this.plugin.saveSettings();
-					});
-			});
 	}
 }
