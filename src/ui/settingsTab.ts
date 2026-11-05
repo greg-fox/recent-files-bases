@@ -59,7 +59,6 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 				textArea.onChange(async (value) => {
 					this.plugin.settings.omittedPathPatterns = parsePatternLines(value);
 					await this.plugin.saveSettings();
-					await this.plugin.pruneExcludedFiles();
 				});
 			});
 
@@ -73,7 +72,6 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 				textArea.onChange(async (value) => {
 					this.plugin.settings.omittedTagPatterns = parsePatternLines(value);
 					await this.plugin.saveSettings();
-					await this.plugin.pruneExcludedFiles();
 				});
 			});
 
@@ -84,7 +82,6 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 				toggle.setValue(this.plugin.settings.omitBookmarkedFiles).onChange(async (value) => {
 					this.plugin.settings.omitBookmarkedFiles = value;
 					await this.plugin.saveSettings();
-					await this.plugin.pruneExcludedFiles();
 				});
 			});
 	}

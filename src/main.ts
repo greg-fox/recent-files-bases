@@ -6,7 +6,7 @@ import { RecentFilesStore } from "./recent/recentFilesStore";
 import { isExcluded } from "./recent/exclusionRules";
 import { getFileTags } from "./recent/tags";
 import { getBookmarkedPaths } from "./recent/bookmarks";
-import type { PluginData } from "./types";
+import type { PluginData, RecentFileEntry } from "./types";
 import { ChangeNotifier } from "./utils/changeNotifier";
 
 const DEFAULT_DATA: PluginData = {
@@ -58,17 +58,21 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	}
 
 	async saveSettings() {
-		await this.savePluginState();
+		// Exclusion settings change what the views show, so refresh them too.
+		await this.commitRecentFiles();
 	}
 
-	/** Drops tracked files that no longer pass the current exclusion settings. Called from the settings tab. */
-	async pruneExcludedFiles() {
-		this.data.recentFiles = this.data.recentFiles.filter((tracked) => {
+	/**
+	 * The tracked list with the current exclusion rules applied. Exclusions are applied
+	 * at read time rather than by deleting stored entries, so editing a pattern (including
+	 * a half-typed one like "." that matches everything) never destroys history.
+	 */
+	getVisibleRecentFiles(): RecentFileEntry[] {
+		return this.data.recentFiles.filter((tracked) => {
 			const file = this.app.vault.getFileByPath(tracked.path);
 			if (!file) return true; // Deletion is handled by the delete event, not here.
 			return !this.isFileExcluded(file);
 		});
-		await this.commitRecentFiles();
 	}
 
 	private readonly onFileOpen = async (file: TFile | null) => {
@@ -130,7 +134,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		this.registerBasesView(
 			RECENT_FILES_BASES_VIEW_TYPE,
 			createRecentFilesBasesViewRegistration({
-				getRecentFiles: () => this.data.recentFiles,
+				getRecentFiles: () => this.getVisibleRecentFiles(),
 				subscribe: (listener) => this.recentFilesChanged.subscribe(listener),
 			}),
 		);
