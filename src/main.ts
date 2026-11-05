@@ -53,6 +53,14 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		await this.savePluginState();
 	}
 
+	/** Applies a changed "Max tracked files" setting immediately instead of on the next open. */
+	async setMaxTrackedFiles(maxTrackedFiles: number) {
+		this.settings.maxTrackedFiles = maxTrackedFiles;
+		const store = new RecentFilesStore({ maxLength: maxTrackedFiles });
+		this.data.recentFiles = store.trim(this.data.recentFiles);
+		await this.savePluginState();
+	}
+
 	/** Drops tracked files that no longer pass the current exclusion settings. Called from the settings tab. */
 	async pruneExcludedFiles() {
 		this.data.recentFiles = this.data.recentFiles.filter((tracked) => {
