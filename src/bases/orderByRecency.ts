@@ -29,3 +29,26 @@ export function orderByRecency<T>(
 	}
 	return ordered;
 }
+
+/**
+ * Applies one `maxItems` cap across every group: picks the `maxItems` most recent entries
+ * from all groups combined, then returns each group's share of them in recency order.
+ * Groups with no surviving entries come back empty, in their original positions.
+ */
+export function orderGroupsByRecency<T>(
+	recentFiles: RecencyOrderable[],
+	groups: T[][],
+	getPath: (item: T) => string,
+	maxItems: number,
+): T[][] {
+	const top = orderByRecency(recentFiles, groups.flat(), getPath, maxItems);
+	const keep = new Set(top.map(getPath));
+	return groups.map((entries) =>
+		orderByRecency(
+			recentFiles,
+			entries.filter((entry) => keep.has(getPath(entry))),
+			getPath,
+			Number.POSITIVE_INFINITY,
+		),
+	);
+}

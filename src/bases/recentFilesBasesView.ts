@@ -2,7 +2,7 @@ import { BasesView, Keymap, parsePropertyId } from "obsidian";
 import type { BasesEntry, BasesPropertyId, BasesViewRegistration, HoverParent, HoverPopover, QueryController } from "obsidian";
 import type { RecentFileEntry } from "../types";
 import type { Unsubscribe } from "../utils/changeNotifier";
-import { orderByRecency } from "./orderByRecency";
+import { orderGroupsByRecency } from "./orderByRecency";
 import { makeFileDraggable, showFileMenu } from "../ui/fileInteractions";
 import { formatRelativeTime } from "./relativeTime";
 import { DEFAULT_MAX_ITEMS, MAX_ITEMS_OPTION_KEY, MAX_MAX_ITEMS, MIN_MAX_ITEMS, resolveMaxItems } from "./maxItemsOption";
@@ -29,7 +29,7 @@ export function createRecentFilesBasesViewRegistration(source: RecentFilesSource
 			{
 				type: "slider",
 				key: MAX_ITEMS_OPTION_KEY,
-				displayName: "Max items per group",
+				displayName: "Max items",
 				default: DEFAULT_MAX_ITEMS,
 				min: MIN_MAX_ITEMS,
 				max: MAX_MAX_ITEMS,
@@ -79,8 +79,16 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 
 		let renderedAnyGroup = false;
 
-		for (const group of this.data.groupedData) {
-			const matches = orderByRecency(recentFiles, group.entries, (entry) => entry.file.path, maxItems);
+		const groups = this.data.groupedData;
+		const matchesByGroup = orderGroupsByRecency(
+			recentFiles,
+			groups.map((group) => group.entries),
+			(entry) => entry.file.path,
+			maxItems,
+		);
+
+		for (const [index, group] of groups.entries()) {
+			const matches = matchesByGroup[index] ?? [];
 			if (matches.length === 0) continue;
 			renderedAnyGroup = true;
 
