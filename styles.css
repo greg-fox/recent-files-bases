@@ -48,3 +48,7 @@
 	color: var(--text-muted);
 	padding: var(--size-4-2);
 }
+
+.recent-files-bases-item-clickable {
+	cursor: var(--cursor-link);
+}
