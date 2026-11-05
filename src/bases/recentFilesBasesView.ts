@@ -89,11 +89,20 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 					text: entry.file.basename,
 					href: "#",
 				});
-				linkEl.addEventListener("click", (evt) => {
-					if (evt.button !== 0 && evt.button !== 1) return;
+				const openFromEvent = (evt: MouseEvent) => {
 					evt.preventDefault();
-					const newLeaf = Keymap.isModEvent(evt);
+					// Middle-click always opens a new tab; otherwise honour Cmd/Ctrl modifiers.
+					const newLeaf = evt.button === 1 ? "tab" : Keymap.isModEvent(evt);
 					void app.workspace.openLinkText(entry.file.path, "", newLeaf);
+				};
+				linkEl.addEventListener("click", (evt) => {
+					if (evt.button !== 0) return;
+					openFromEvent(evt);
+				});
+				// Browsers do not fire "click" for the middle button; they fire "auxclick".
+				linkEl.addEventListener("auxclick", (evt) => {
+					if (evt.button !== 1) return;
+					openFromEvent(evt);
 				});
 				linkEl.addEventListener("mouseover", (evt) => {
 					app.workspace.trigger("hover-link", {
