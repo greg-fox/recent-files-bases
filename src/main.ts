@@ -3,7 +3,7 @@ import { createRecentFilesBasesViewRegistration, RECENT_FILES_BASES_VIEW_TYPE } 
 import { DEFAULT_SETTINGS, type RecentFilesBasesSettings } from "./settings";
 import { RecentFilesBasesSettingTab } from "./ui/settingsTab";
 import { RecentFilesStore } from "./recent/recentFilesStore";
-import { isExcluded } from "./recent/exclusionRules";
+import { compileExclusionRules, isExcluded, type CompiledExclusionRules } from "./recent/exclusionRules";
 import { getFileTags } from "./recent/tags";
 import { getBookmarkedPaths } from "./recent/bookmarks";
 import type { PluginData } from "./types";
@@ -18,6 +18,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	settings: RecentFilesBasesSettings;
 	data: PluginData;
 
+	private compiledRules: CompiledExclusionRules | null = null;
 	private readonly editDebounceTimers = new Map<string, number>();
 
 	async onload() {
@@ -50,6 +51,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	}
 
 	async saveSettings() {
+		this.compiledRules = null; // Recompile on next use.
 		await this.savePluginState();
 	}
 
@@ -103,13 +105,16 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	};
 
 	private isFileExcluded(file: TFile): boolean {
+		this.compiledRules ??= compileExclusionRules(this.settings);
+		const rules = this.compiledRules;
 		return isExcluded(
 			{
 				path: file.path,
-				tags: getFileTags(this.app, file),
-				isBookmarked: getBookmarkedPaths(this.app).has(file.path),
+				tags: rules.tagRegexes.length > 0 ? getFileTags(this.app, file) : [],
+				// Walking the bookmark tree is only worth doing when the setting is on.
+				isBookmarked: rules.omitBookmarkedFiles && getBookmarkedPaths(this.app).has(file.path),
 			},
-			this.settings,
+			rules,
 		);
 	}
 
