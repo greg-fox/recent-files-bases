@@ -6,12 +6,14 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 
 ### Added
 
+- **Clear history** setting, with a confirmation dialog, to empty the recent list.
 - **Show last opened** view option that adds a relative timestamp to each row. Timestamps refresh once a minute while the view is visible.
 - Right-click opens the standard file menu, and entries can be dragged into notes as links.
 - Invalid regular expressions in exclusion settings are listed under the setting.
 
 ### Changed
 
+- Recent-list changes are written to disk in one batch about two seconds after the last change, and immediately when the app is hidden or the plugin unloads. This cuts disk writes and Sync uploads when opening several notes in a row.
 - Property values render with Bases' native renderer (clickable links, tags, dates).
 - **Max items** caps the whole view instead of each group separately.
 - Default **Max tracked files** raised from 50 to 500.
@@ -19,6 +21,7 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 
 ### Fixed
 
+- When Obsidian is too old for plugin Bases views, a notice says so instead of failing silently.
 - Open views refresh as soon as the recent list changes.
 - Editing exclusion patterns no longer deletes history; exclusions apply when the list is read.
 - Middle-click opens entries in a new tab.

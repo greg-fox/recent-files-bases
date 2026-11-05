@@ -28,6 +28,15 @@ export class Component {
 
 	registerEvent(_ref: unknown): void {}
 
+	registerDomEvent(
+		el: { addEventListener: (type: string, cb: () => void) => void; removeEventListener: (type: string, cb: () => void) => void },
+		type: string,
+		callback: () => void,
+	): void {
+		el.addEventListener(type, callback);
+		this.register(() => el.removeEventListener(type, callback));
+	}
+
 	registerInterval(id: number): number {
 		this.register(() => window.clearInterval(id));
 		return id;
@@ -68,6 +77,14 @@ export class PluginSettingTab {
 }
 
 export class Setting {}
+
+export class Modal {
+	constructor(public app: unknown) {}
+}
+
+export class Notice {
+	constructor(public message: string) {}
+}
 
 export class Menu {}
 
