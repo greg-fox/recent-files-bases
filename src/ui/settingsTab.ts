@@ -1,7 +1,8 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type RecentFilesBasesPlugin from "../main";
 import type { RecentFilesUpdateTrigger } from "../settings";
 import { findInvalidPatterns } from "../recent/exclusionRules";
+import { ConfirmModal } from "./confirmModal";
 
 /** Rewrites a setting's description to include any invalid patterns, or restores the base text. */
 function showPatternValidity(setting: Setting, baseDesc: string, patterns: string[]): void {
@@ -87,5 +88,26 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 			});
 		});
 		showPatternValidity(tagSetting, tagDesc, this.plugin.settings.omittedTagPatterns);
+
+		new Setting(containerEl)
+			.setName("Clear history")
+			.setDesc("Remove every file from the recent list. This cannot be undone.")
+			.addButton((button) =>
+				button
+					.setButtonText("Clear history")
+					.setWarning()
+					.onClick(() => {
+						const count = this.plugin.data.recentFiles.length;
+						new ConfirmModal(this.app, {
+							title: "Clear recent files history?",
+							message: `This removes all ${count} tracked files from the recent list. Your notes are not affected. This cannot be undone.`,
+							confirmText: "Clear history",
+							onConfirm: async () => {
+								await this.plugin.clearRecentFiles();
+								new Notice("Recent files history cleared.");
+							},
+						}).open();
+					}),
+			);
 	}
 }
