@@ -70,6 +70,9 @@ export default class RecentFilesBasesPlugin extends Plugin {
 
 	private readonly onFileModify = (file: TAbstractFile) => {
 		if (this.settings.updateOn !== "file-edit" || !(file instanceof TFile)) return;
+		// "modify" also fires for Sync, other plugins, and background writes. Only count edits
+		// to the file the user is actually looking at.
+		if (file !== this.app.workspace.getActiveFile()) return;
 
 		const existingTimer = this.editDebounceTimers.get(file.path);
 		if (existingTimer !== undefined) window.clearTimeout(existingTimer);
