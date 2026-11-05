@@ -13,8 +13,8 @@ import { ChangeNotifier } from "./utils/changeNotifier";
 const EDIT_TRACKING_DEBOUNCE_MS = 2000;
 
 export default class RecentFilesBasesPlugin extends Plugin {
-	settings: RecentFilesBasesSettings = { ...DEFAULT_SETTINGS };
-	data: PluginData = { ...DEFAULT_DATA };
+	settings: RecentFilesBasesSettings = sanitizeSettings(undefined);
+	data: PluginData = sanitizePluginData(undefined);
 
 	private compiledRules: CompiledExclusionRules | null = null;
 	private readonly editDebounceTimers = new Map<string, number>();

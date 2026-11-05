@@ -4,6 +4,30 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 
 ## [Unreleased]
 
+### Added
+
+- **Show last opened** view option that adds a relative timestamp to each row.
+- Right-click opens the standard file menu, and entries can be dragged into notes or panes.
+- Invalid regular expressions in exclusion settings are listed under the setting.
+
+### Changed
+
+- Property values render with Bases' native renderer (clickable links, tags, dates).
+- **Max items** is now labelled **Max items per group** to match its behaviour.
+- Default **Max tracked files** raised from 50 to 500.
+- **File edited** tracking only counts edits to the active file.
+
+### Fixed
+
+- Open views refresh as soon as the recent list changes.
+- Editing exclusion patterns no longer deletes history; exclusions apply when the list is read.
+- Middle-click opens entries in a new tab.
+- Comma- or space-separated and `#`-prefixed frontmatter tags are matched by tag exclusions.
+- Lowering **Max tracked files** trims the list immediately.
+- Rows stay clickable when **file name** is hidden.
+- Malformed data in `data.json` falls back to defaults instead of breaking the plugin.
+- Renaming or deleting untracked files no longer rewrites the plugin's data file.
+
 ## [1.0.0]
 
 Initial release.
