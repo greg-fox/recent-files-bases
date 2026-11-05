@@ -4,12 +4,15 @@ import type { RecentFileEntry } from "../types";
 import type { Unsubscribe } from "../utils/changeNotifier";
 import { orderGroupsByRecency } from "./orderByRecency";
 import { makeFileDraggable, showFileMenu } from "../ui/fileInteractions";
-import { formatRelativeTime } from "./relativeTime";
+import { formatRelativeTime, refreshRelativeLabels, type RelativeTimeLabel } from "./relativeTime";
 import { DEFAULT_MAX_ITEMS, MAX_ITEMS_OPTION_KEY, MAX_MAX_ITEMS, MIN_MAX_ITEMS, resolveMaxItems } from "./maxItemsOption";
 
 export const RECENT_FILES_BASES_VIEW_TYPE = "recent-files-list";
 
 const SHOW_LAST_OPENED_OPTION_KEY = "showLastOpened";
+
+/** How often "5m ago" style labels are refreshed while the view sits open. */
+const LAST_OPENED_REFRESH_MS = 60_000;
 
 const DEFAULT_PROPERTIES: BasesPropertyId[] = ["file.name"];
 
@@ -51,6 +54,9 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 
 	private readonly containerEl: HTMLElement;
 	private readonly source: RecentFilesSource;
+	/** Labels on screen right now; replaced on every render so the timer never holds stale elements. */
+	private lastOpenedLabels: RelativeTimeLabel[] = [];
+	private lastOpenedTimerStarted = false;
 
 	constructor(controller: QueryController, parentEl: HTMLElement, source: RecentFilesSource) {
 		super(controller);
@@ -68,6 +74,7 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 
 	onDataUpdated(): void {
 		this.containerEl.empty();
+		this.lastOpenedLabels = [];
 
 		const maxItems = resolveMaxItems(this.config.get(MAX_ITEMS_OPTION_KEY));
 		const recentFiles = this.source.getRecentFiles();
@@ -102,14 +109,17 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 				const itemEl = this.renderEntry(listEl, entry, properties);
 				const openedAtMs = openedAtByPath.get(entry.file.path);
 				if (showLastOpened && openedAtMs !== undefined) {
-					itemEl.createSpan({
+					const labelEl = itemEl.createSpan({
 						cls: "recent-files-bases-last-opened",
 						text: formatRelativeTime(openedAtMs, nowMs),
 						attr: { title: new Date(openedAtMs).toLocaleString() },
 					});
+					this.lastOpenedLabels.push({ el: labelEl, openedAtMs });
 				}
 			}
 		}
+
+		if (this.lastOpenedLabels.length > 0) this.startLastOpenedTimer();
 
 		if (!renderedAnyGroup) {
 			this.containerEl.createDiv({
@@ -117,6 +127,22 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 				text: "No recently opened files match this base.",
 			});
 		}
+	}
+
+	/**
+	 * Starts one timer per view, only once the view actually shows timestamps. Each tick only
+	 * rewrites label text that changed: no re-render, no vault or metadata access. Ticks are
+	 * skipped while the view is hidden or the window is in the background.
+	 */
+	private startLastOpenedTimer(): void {
+		if (this.lastOpenedTimerStarted) return;
+		this.lastOpenedTimerStarted = true;
+		this.registerInterval(
+			window.setInterval(() => {
+				if (this.lastOpenedLabels.length === 0 || document.hidden || !this.containerEl.isShown()) return;
+				refreshRelativeLabels(this.lastOpenedLabels, Date.now());
+			}, LAST_OPENED_REFRESH_MS),
+		);
 	}
 
 	private renderEntry(listEl: HTMLElement, entry: BasesEntry, properties: BasesPropertyId[]): HTMLElement {

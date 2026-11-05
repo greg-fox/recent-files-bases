@@ -15,3 +15,25 @@ export function formatRelativeTime(thenMs: number, nowMs: number, locale?: strin
 	if (elapsed < WEEK_MS) return `${Math.floor(elapsed / DAY_MS)}d ago`;
 	return new Date(thenMs).toLocaleDateString(locale);
 }
+
+/** A rendered relative-time label: anything with writable text, plus the timestamp it shows. */
+export interface RelativeTimeLabel {
+	el: { textContent: string | null };
+	openedAtMs: number;
+}
+
+/**
+ * Recomputes each label's text and writes it only when it changed, so an idle tick touches
+ * no DOM at all. Returns how many labels were updated.
+ */
+export function refreshRelativeLabels(labels: readonly RelativeTimeLabel[], nowMs: number, locale?: string): number {
+	let changed = 0;
+	for (const label of labels) {
+		const text = formatRelativeTime(label.openedAtMs, nowMs, locale);
+		if (label.el.textContent !== text) {
+			label.el.textContent = text;
+			changed++;
+		}
+	}
+	return changed;
+}
