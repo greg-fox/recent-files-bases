@@ -7,6 +7,7 @@ import { isExcluded } from "./recent/exclusionRules";
 import { getFileTags } from "./recent/tags";
 import { getBookmarkedPaths } from "./recent/bookmarks";
 import type { PluginData } from "./types";
+import { ChangeNotifier } from "./utils/changeNotifier";
 
 const DEFAULT_DATA: PluginData = {
 	recentFiles: [],
@@ -19,6 +20,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	data: PluginData;
 
 	private readonly editDebounceTimers = new Map<string, number>();
+	private readonly recentFilesChanged = new ChangeNotifier();
 
 	async onload() {
 		await this.loadPluginState();
@@ -49,8 +51,14 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		await this.saveData({ settings: this.settings, data: this.data });
 	}
 
+	/** Persists state and tells any open Recent files views to re-render. */
+	private async commitRecentFiles() {
+		this.recentFilesChanged.notify();
+		await this.commitRecentFiles();
+	}
+
 	async saveSettings() {
-		await this.savePluginState();
+		await this.commitRecentFiles();
 	}
 
 	/** Drops tracked files that no longer pass the current exclusion settings. Called from the settings tab. */
@@ -60,7 +68,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 			if (!file) return true; // Deletion is handled by the delete event, not here.
 			return !this.isFileExcluded(file);
 		});
-		await this.savePluginState();
+		await this.commitRecentFiles();
 	}
 
 	private readonly onFileOpen = async (file: TFile | null) => {
@@ -85,7 +93,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		const newBasename = file.name.replace(/\.[^/.]+$/, "");
 		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
 		this.data.recentFiles = store.rename(this.data.recentFiles, oldPath, file.path, newBasename);
-		await this.savePluginState();
+		await this.commitRecentFiles();
 	};
 
 	private readonly onFileDelete = async (file: TAbstractFile) => {
@@ -121,7 +129,10 @@ export default class RecentFilesBasesPlugin extends Plugin {
 
 		this.registerBasesView(
 			RECENT_FILES_BASES_VIEW_TYPE,
-			createRecentFilesBasesViewRegistration(() => this.data.recentFiles),
+			createRecentFilesBasesViewRegistration({
+				getRecentFiles: () => this.data.recentFiles,
+				subscribe: (listener) => this.recentFilesChanged.subscribe(listener),
+			}),
 		);
 	}
 }
