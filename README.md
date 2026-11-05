@@ -16,7 +16,7 @@ The plugin does not write anything to your notes. Recency is tracked internally 
 
 ## Settings
 
-- **Max tracked files** — how many recently opened files the plugin remembers in total.
+- **Max tracked files** — how many recently opened files the plugin remembers in total (default 500). Every Base filters this one shared list, so a Base scoped to a single folder shows only the tracked files in that folder, which can be fewer than its **Max items** slider allows.
 - **Track recency on** — update the list when a file is opened, or when its content changes.
 - **Omitted path patterns** / **Omitted tag patterns** — regular expressions (one per line); matching files are never tracked.
 - **Omit bookmarked files** — skip files that are bookmarked.

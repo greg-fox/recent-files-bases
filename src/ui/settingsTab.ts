@@ -37,7 +37,7 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Max tracked files")
-			.setDesc("How many recently opened files the plugin remembers.")
+			.setDesc("How many recently opened files the plugin remembers. Each base filters this list, so a narrow base can only show the files from it that match.")
 			.addText((text) => {
 				text.inputEl.type = "number";
 				text.setValue(String(this.plugin.settings.maxTrackedFiles));
