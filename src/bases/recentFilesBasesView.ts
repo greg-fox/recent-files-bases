@@ -1,6 +1,7 @@
 import { BasesView, Keymap, parsePropertyId } from "obsidian";
 import type { BasesEntry, BasesPropertyId, BasesViewRegistration, HoverParent, HoverPopover, QueryController } from "obsidian";
 import type { RecentFileEntry } from "../types";
+import type { Unsubscribe } from "../utils/changeNotifier";
 import { orderByRecency } from "./orderByRecency";
 import { DEFAULT_MAX_ITEMS, MAX_ITEMS_OPTION_KEY, MAX_MAX_ITEMS, MIN_MAX_ITEMS, resolveMaxItems } from "./maxItemsOption";
 
@@ -8,12 +9,18 @@ export const RECENT_FILES_BASES_VIEW_TYPE = "recent-files-list";
 
 const DEFAULT_PROPERTIES: BasesPropertyId[] = ["file.name"];
 
-export function createRecentFilesBasesViewRegistration(getRecentFiles: () => RecentFileEntry[]): BasesViewRegistration {
+/** What a Recent files view needs from the plugin: the current list, and a way to hear about changes to it. */
+export interface RecentFilesSource {
+	getRecentFiles: () => RecentFileEntry[];
+	subscribe: (listener: () => void) => Unsubscribe;
+}
+
+export function createRecentFilesBasesViewRegistration(source: RecentFilesSource): BasesViewRegistration {
 	return {
 		name: "Recent files",
 		icon: "clock",
 		factory: (controller: QueryController, containerEl: HTMLElement) =>
-			new RecentFilesBasesView(controller, containerEl, getRecentFiles),
+			new RecentFilesBasesView(controller, containerEl, source),
 		options: () => [
 			{
 				type: "slider",
@@ -33,19 +40,27 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 	hoverPopover: HoverPopover | null = null;
 
 	private readonly containerEl: HTMLElement;
-	private readonly getRecentFiles: () => RecentFileEntry[];
+	private readonly source: RecentFilesSource;
 
-	constructor(controller: QueryController, parentEl: HTMLElement, getRecentFiles: () => RecentFileEntry[]) {
+	constructor(controller: QueryController, parentEl: HTMLElement, source: RecentFilesSource) {
 		super(controller);
 		this.containerEl = parentEl.createDiv("recent-files-bases-view");
-		this.getRecentFiles = getRecentFiles;
+		this.source = source;
+		// Bases only calls onDataUpdated when the query result changes. Opening a file does not
+		// change the query result, so re-render whenever the tracked recent list changes too.
+		this.register(
+			source.subscribe(() => {
+				// Skip until Bases has delivered the first query result.
+				if (this.data) this.onDataUpdated();
+			}),
+		);
 	}
 
 	onDataUpdated(): void {
 		this.containerEl.empty();
 
 		const maxItems = resolveMaxItems(this.config.get(MAX_ITEMS_OPTION_KEY));
-		const recentFiles = this.getRecentFiles();
+		const recentFiles = this.source.getRecentFiles();
 		const order = this.config.getOrder();
 		const properties: BasesPropertyId[] = order.length > 0 ? order : DEFAULT_PROPERTIES;
 
