@@ -81,7 +81,13 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		this.editDebounceTimers.set(file.path, timer);
 	};
 
+	private isTracked(path: string): boolean {
+		return this.data.recentFiles.some((tracked) => tracked.path === path);
+	}
+
 	private readonly onFileRename = async (file: TAbstractFile, oldPath: string) => {
+		// Folder deletes/renames emit one event per file; only touch disk when it matters.
+		if (!this.isTracked(oldPath)) return;
 		const newBasename = file.name.replace(/\.[^/.]+$/, "");
 		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
 		this.data.recentFiles = store.rename(this.data.recentFiles, oldPath, file.path, newBasename);
@@ -89,6 +95,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	};
 
 	private readonly onFileDelete = async (file: TAbstractFile) => {
+		if (!this.isTracked(file.path)) return;
 		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
 		this.data.recentFiles = store.remove(this.data.recentFiles, file.path);
 		await this.savePluginState();
