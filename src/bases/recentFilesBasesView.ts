@@ -91,7 +91,15 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 
 			const listEl = groupEl.createEl("ul", { cls: "recent-files-bases-list" });
 			for (const entry of matches) {
-				this.renderEntry(listEl, entry, properties);
+				const itemEl = this.renderEntry(listEl, entry, properties);
+				const openedAtMs = openedAtByPath.get(entry.file.path);
+				if (showLastOpened && openedAtMs !== undefined) {
+					itemEl.createSpan({
+						cls: "recent-files-bases-last-opened",
+						text: formatRelativeTime(openedAtMs, nowMs),
+						attr: { title: new Date(openedAtMs).toLocaleString() },
+					});
+				}
 			}
 		}
 
