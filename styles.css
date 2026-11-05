@@ -60,3 +60,7 @@
 	font-size: var(--font-smaller);
 	white-space: nowrap;
 }
+
+.recent-files-bases-item-clickable {
+	cursor: var(--cursor-link);
+}

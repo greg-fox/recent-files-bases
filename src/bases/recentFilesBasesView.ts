@@ -170,6 +170,18 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 		if (!renderedAny) {
 			itemEl.setText(entry.file.basename);
 		}
+
+		// Without a file name column there is no link to click, so make the whole row open the file.
+		if (!properties.includes("file.name")) {
+			itemEl.addClass("recent-files-bases-item-clickable");
+			itemEl.addEventListener("click", (evt) => {
+				if (evt.button !== 0) return;
+				// Leave clicks on links rendered inside property values to those links.
+				if (evt.target instanceof Element && evt.target.closest("a")) return;
+				void app.workspace.openLinkText(entry.file.path, "", Keymap.isModEvent(evt));
+			});
+		}
+
 		return itemEl;
 	}
 }
