@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRelativeTime } from "./relativeTime";
+import { formatRelativeTime, refreshRelativeLabels } from "./relativeTime";
 
 const now = Date.UTC(2026, 10, 5, 12, 0, 0);
 
@@ -21,5 +21,19 @@ describe("formatRelativeTime", () => {
 
 	it("treats future timestamps (clock skew) as just now", () => {
 		expect(formatRelativeTime(now + 60_000, now)).toBe("just now");
+	});
+});
+
+describe("refreshRelativeLabels", () => {
+	it("updates only labels whose text changed", () => {
+		const fresh = { el: { textContent: "just now" }, openedAtMs: now - 10_000 };
+		const stale = { el: { textContent: "5m ago" }, openedAtMs: now - 65 * 60_000 };
+		expect(refreshRelativeLabels([fresh, stale], now)).toBe(1);
+		expect(fresh.el.textContent).toBe("just now");
+		expect(stale.el.textContent).toBe("1h ago");
+	});
+
+	it("does nothing for an empty list", () => {
+		expect(refreshRelativeLabels([], now)).toBe(0);
 	});
 });

@@ -6,7 +6,7 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 
 ### Added
 
-- **Show last opened** view option that adds a relative timestamp to each row.
+- **Show last opened** view option that adds a relative timestamp to each row. Timestamps refresh once a minute while the view is visible.
 - Right-click opens the standard file menu, and entries can be dragged into notes as links.
 - Invalid regular expressions in exclusion settings are listed under the setting.
 
