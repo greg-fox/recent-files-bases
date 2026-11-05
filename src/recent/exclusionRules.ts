@@ -40,6 +40,21 @@ export function compileExclusionRules(rules: ExclusionRules): CompiledExclusionR
 	};
 }
 
+/** Returns the non-blank patterns that are not valid regular expressions, for settings feedback. */
+export function findInvalidPatterns(patterns: string[]): string[] {
+	return patterns
+		.map((pattern) => pattern.trim())
+		.filter((pattern) => {
+			if (!pattern) return false;
+			try {
+				new RegExp(pattern);
+				return false;
+			} catch {
+				return true;
+			}
+		});
+}
+
 /** Whether a candidate file should be kept out of the tracked recent-files list. */
 export function isExcluded(candidate: ExclusionCandidate, rules: CompiledExclusionRules): boolean {
 	if (rules.omitBookmarkedFiles && candidate.isBookmarked) return true;

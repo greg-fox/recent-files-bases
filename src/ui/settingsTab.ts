@@ -1,6 +1,20 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type RecentFilesBasesPlugin from "../main";
 import type { RecentFilesUpdateTrigger } from "../settings";
+import { findInvalidPatterns } from "../recent/exclusionRules";
+
+/** Rewrites a setting's description to include any invalid patterns, or restores the base text. */
+function showPatternValidity(setting: Setting, baseDesc: string, patterns: string[]): void {
+	const invalid = findInvalidPatterns(patterns);
+	setting.descEl.empty();
+	setting.descEl.createSpan({ text: baseDesc });
+	if (invalid.length > 0) {
+		setting.descEl.createDiv({
+			cls: "recent-files-bases-invalid-pattern",
+			text: `Ignored, not valid regular expressions: ${invalid.join(", ")}`,
+		});
+	}
+}
 
 function parsePatternLines(value: string): string[] {
 	return value
@@ -49,31 +63,31 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
-			.setName("Omitted path patterns")
-			.setDesc("Regular expressions, one per line. Paths matching any of them are never tracked.")
-			.addTextArea((textArea) => {
-				textArea.inputEl.rows = 6;
-				textArea.setPlaceholder("^daily/\n\\.excalidraw\\.md$");
-				textArea.setValue(this.plugin.settings.omittedPathPatterns.join("\n"));
-				textArea.onChange(async (value) => {
-					this.plugin.settings.omittedPathPatterns = parsePatternLines(value);
-					await this.plugin.saveSettings();
-				});
+		const pathDesc = "Regular expressions, one per line. Paths matching any of them are never tracked.";
+		const pathSetting = new Setting(containerEl).setName("Omitted path patterns").addTextArea((textArea) => {
+			textArea.inputEl.rows = 6;
+			textArea.setPlaceholder("^daily/\n\\.excalidraw\\.md$");
+			textArea.setValue(this.plugin.settings.omittedPathPatterns.join("\n"));
+			textArea.onChange(async (value) => {
+				this.plugin.settings.omittedPathPatterns = parsePatternLines(value);
+				showPatternValidity(pathSetting, pathDesc, this.plugin.settings.omittedPathPatterns);
+				await this.plugin.saveSettings();
 			});
+		});
+		showPatternValidity(pathSetting, pathDesc, this.plugin.settings.omittedPathPatterns);
 
-		new Setting(containerEl)
-			.setName("Omitted tag patterns")
-			.setDesc("Regular expressions, one per line. Files with a matching tag are never tracked.")
-			.addTextArea((textArea) => {
-				textArea.inputEl.rows = 6;
-				textArea.setPlaceholder("^archive$");
-				textArea.setValue(this.plugin.settings.omittedTagPatterns.join("\n"));
-				textArea.onChange(async (value) => {
-					this.plugin.settings.omittedTagPatterns = parsePatternLines(value);
-					await this.plugin.saveSettings();
-				});
+		const tagDesc = "Regular expressions, one per line. Files with a matching tag are never tracked.";
+		const tagSetting = new Setting(containerEl).setName("Omitted tag patterns").addTextArea((textArea) => {
+			textArea.inputEl.rows = 6;
+			textArea.setPlaceholder("^archive$");
+			textArea.setValue(this.plugin.settings.omittedTagPatterns.join("\n"));
+			textArea.onChange(async (value) => {
+				this.plugin.settings.omittedTagPatterns = parsePatternLines(value);
+				showPatternValidity(tagSetting, tagDesc, this.plugin.settings.omittedTagPatterns);
+				await this.plugin.saveSettings();
 			});
+		});
+		showPatternValidity(tagSetting, tagDesc, this.plugin.settings.omittedTagPatterns);
 
 		new Setting(containerEl)
 			.setName("Omit bookmarked files")
@@ -82,7 +96,7 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 				toggle.setValue(this.plugin.settings.omitBookmarkedFiles).onChange(async (value) => {
 					this.plugin.settings.omitBookmarkedFiles = value;
 					await this.plugin.saveSettings();
-				});
+					});
 			});
 	}
 }

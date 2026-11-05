@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	compileExclusionRules,
+	findInvalidPatterns,
 	isExcluded as isExcludedCompiled,
 	type ExclusionCandidate,
 	type ExclusionRules,
@@ -59,5 +60,15 @@ describe("isExcluded", () => {
 		const compiled = compileExclusionRules({ ...noRules, omittedPathPatterns: ["^a", "[", " "], omittedTagPatterns: ["x"] });
 		expect(compiled.pathRegexes.map((re) => re.source)).toEqual(["^a"]);
 		expect(compiled.tagRegexes.map((re) => re.source)).toEqual(["x"]);
+	});
+});
+
+describe("findInvalidPatterns", () => {
+	it("returns only the patterns that fail to compile", () => {
+		expect(findInvalidPatterns(["^daily/", "[", "(", "ok$"])).toEqual(["[", "("]);
+	});
+
+	it("ignores blank lines", () => {
+		expect(findInvalidPatterns(["", "   "])).toEqual([]);
 	});
 });
