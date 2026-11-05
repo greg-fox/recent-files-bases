@@ -54,11 +54,11 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	/** Persists state and tells any open Recent files views to re-render. */
 	private async commitRecentFiles() {
 		this.recentFilesChanged.notify();
-		await this.commitRecentFiles();
+		await this.savePluginState();
 	}
 
 	async saveSettings() {
-		await this.commitRecentFiles();
+		await this.savePluginState();
 	}
 
 	/** Drops tracked files that no longer pass the current exclusion settings. Called from the settings tab. */
@@ -99,7 +99,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	private readonly onFileDelete = async (file: TAbstractFile) => {
 		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
 		this.data.recentFiles = store.remove(this.data.recentFiles, file.path);
-		await this.savePluginState();
+		await this.commitRecentFiles();
 	};
 
 	private readonly trackFile = async (file: TFile) => {
@@ -107,7 +107,7 @@ export default class RecentFilesBasesPlugin extends Plugin {
 
 		const store = new RecentFilesStore({ maxLength: this.settings.maxTrackedFiles });
 		this.data.recentFiles = store.add(this.data.recentFiles, file);
-		await this.savePluginState();
+		await this.commitRecentFiles();
 	};
 
 	private isFileExcluded(file: TFile): boolean {
