@@ -1,6 +1,7 @@
 import { Plugin, TFile, type TAbstractFile } from "obsidian";
 import { createRecentFilesBasesViewRegistration, RECENT_FILES_BASES_VIEW_TYPE } from "./bases/recentFilesBasesView";
-import { DEFAULT_SETTINGS, type RecentFilesBasesSettings } from "./settings";
+import type { RecentFilesBasesSettings } from "./settings";
+import { sanitizePluginData, sanitizeSettings } from "./persistence";
 import { RecentFilesBasesSettingTab } from "./ui/settingsTab";
 import { RecentFilesStore } from "./recent/recentFilesStore";
 import { compileExclusionRules, isExcluded, type CompiledExclusionRules } from "./recent/exclusionRules";
@@ -8,10 +9,6 @@ import { getFileTags } from "./recent/tags";
 import { getBookmarkedPaths } from "./recent/bookmarks";
 import type { PluginData, RecentFileEntry } from "./types";
 import { ChangeNotifier } from "./utils/changeNotifier";
-
-const DEFAULT_DATA: PluginData = {
-	recentFiles: [],
-};
 
 const EDIT_TRACKING_DEBOUNCE_MS = 2000;
 
@@ -43,9 +40,9 @@ export default class RecentFilesBasesPlugin extends Plugin {
 	}
 
 	async loadPluginState() {
-		const loaded = (await this.loadData()) as Partial<{ settings: RecentFilesBasesSettings; data: PluginData }> | null;
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded?.settings ?? {});
-		this.data = Object.assign({}, DEFAULT_DATA, loaded?.data ?? {});
+		const loaded = (await this.loadData()) as Partial<{ settings: unknown; data: unknown }> | null;
+		this.settings = sanitizeSettings(loaded?.settings);
+		this.data = sanitizePluginData(loaded?.data);
 	}
 
 	async savePluginState() {
