@@ -30,6 +30,22 @@ describe("RecentFilesStore", () => {
 		expect(entries.map((e) => e.path)).toEqual(["c.md", "b.md"]);
 	});
 
+	it("trims to maxLength, keeping the most recent entries", () => {
+		const store = new RecentFilesStore({ maxLength: 2, nowMs: () => 1 });
+		const entries: RecentFileEntry[] = [
+			{ path: "a.md", basename: "a", openedAtMs: 3 },
+			{ path: "b.md", basename: "b", openedAtMs: 2 },
+			{ path: "c.md", basename: "c", openedAtMs: 1 },
+		];
+		expect(store.trim(entries).map((e) => e.path)).toEqual(["a.md", "b.md"]);
+	});
+
+	it("returns the same array when already within maxLength", () => {
+		const store = new RecentFilesStore({ maxLength: 5, nowMs: () => 1 });
+		const entries: RecentFileEntry[] = [{ path: "a.md", basename: "a", openedAtMs: 1 }];
+		expect(store.trim(entries)).toBe(entries);
+	});
+
 	it("removes by path", () => {
 		const store = new RecentFilesStore({ maxLength: 10, nowMs: () => 1 });
 		const entries: RecentFileEntry[] = [

@@ -64,6 +64,14 @@ export default class RecentFilesBasesPlugin extends Plugin {
 		await this.commitRecentFiles();
 	}
 
+	/** Applies a changed "Max tracked files" setting immediately instead of on the next open. */
+	async setMaxTrackedFiles(maxTrackedFiles: number) {
+		this.settings.maxTrackedFiles = maxTrackedFiles;
+		const store = new RecentFilesStore({ maxLength: maxTrackedFiles });
+		this.data.recentFiles = store.trim(this.data.recentFiles);
+		await this.commitRecentFiles();
+	}
+
 	/**
 	 * The tracked list with the current exclusion rules applied. Exclusions are applied
 	 * at read time rather than by deleting stored entries, so editing a pattern (including

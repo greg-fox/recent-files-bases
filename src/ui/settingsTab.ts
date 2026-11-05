@@ -44,8 +44,7 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 				text.onChange(async (value) => {
 					const parsed = Number.parseInt(value, 10);
 					if (!Number.isFinite(parsed) || parsed <= 0) return;
-					this.plugin.settings.maxTrackedFiles = parsed;
-					await this.plugin.saveSettings();
+					await this.plugin.setMaxTrackedFiles(parsed);
 				});
 			});
 
