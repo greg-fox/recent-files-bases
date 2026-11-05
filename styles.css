@@ -48,3 +48,10 @@
 	color: var(--text-muted);
 	padding: var(--size-4-2);
 }
+
+.recent-files-bases-last-opened {
+	margin-left: auto;
+	color: var(--text-faint);
+	font-size: var(--font-smaller);
+	white-space: nowrap;
+}

@@ -10,6 +10,7 @@ The plugin tracks the files you open (or, optionally, edit) in a small internal 
 - Sorts strictly by recency, most recent first, regardless of the Base's configured sort.
 - Displays whichever properties you've selected in the Base's Properties menu, same as other Bases views.
 - Supports a per-view **Max items** slider (view options, top-right of the Bases toolbar) to cap how many entries are shown.
+- Optional **Show last opened** toggle (view options) adds a relative timestamp to each row, such as "5m ago". Hover it for the full date and time.
 - Links open on click; Cmd/Ctrl-click (or middle-click) opens in a new tab, and hovering shows Obsidian's native link preview.
 
 The plugin does not write anything to your notes. Recency is tracked internally in the plugin's own data file, not in file frontmatter.

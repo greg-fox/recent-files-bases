@@ -2,9 +2,12 @@ import { BasesView, Keymap, parsePropertyId } from "obsidian";
 import type { BasesEntry, BasesPropertyId, BasesViewRegistration, HoverParent, HoverPopover, QueryController } from "obsidian";
 import type { RecentFileEntry } from "../types";
 import { orderByRecency } from "./orderByRecency";
+import { formatRelativeTime } from "./relativeTime";
 import { DEFAULT_MAX_ITEMS, MAX_ITEMS_OPTION_KEY, MAX_MAX_ITEMS, MIN_MAX_ITEMS, resolveMaxItems } from "./maxItemsOption";
 
 export const RECENT_FILES_BASES_VIEW_TYPE = "recent-files-list";
+
+const SHOW_LAST_OPENED_OPTION_KEY = "showLastOpened";
 
 const DEFAULT_PROPERTIES: BasesPropertyId[] = ["file.name"];
 
@@ -23,6 +26,12 @@ export function createRecentFilesBasesViewRegistration(getRecentFiles: () => Rec
 				min: MIN_MAX_ITEMS,
 				max: MAX_MAX_ITEMS,
 				step: 1,
+			},
+			{
+				type: "toggle",
+				key: SHOW_LAST_OPENED_OPTION_KEY,
+				displayName: "Show last opened",
+				default: false,
 			},
 		],
 	};
@@ -48,6 +57,9 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 		const recentFiles = this.getRecentFiles();
 		const order = this.config.getOrder();
 		const properties: BasesPropertyId[] = order.length > 0 ? order : DEFAULT_PROPERTIES;
+		const showLastOpened = this.config.get(SHOW_LAST_OPENED_OPTION_KEY) === true;
+		const openedAtByPath = new Map(recentFiles.map((recent) => [recent.path, recent.openedAtMs]));
+		const nowMs = Date.now();
 
 		let renderedAnyGroup = false;
 
@@ -75,7 +87,7 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 		}
 	}
 
-	private renderEntry(listEl: HTMLElement, entry: BasesEntry, properties: BasesPropertyId[]): void {
+	private renderEntry(listEl: HTMLElement, entry: BasesEntry, properties: BasesPropertyId[]): HTMLElement {
 		const { app } = this;
 		const itemEl = listEl.createEl("li", { cls: "recent-files-bases-item" });
 
@@ -121,5 +133,6 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 		if (!renderedAny) {
 			itemEl.setText(entry.file.basename);
 		}
+		return itemEl;
 	}
 }
