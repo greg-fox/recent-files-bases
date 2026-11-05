@@ -53,3 +53,10 @@
 	color: var(--text-error);
 	margin-top: var(--size-4-1);
 }
+
+.recent-files-bases-last-opened {
+	margin-left: auto;
+	color: var(--text-faint);
+	font-size: var(--font-smaller);
+	white-space: nowrap;
+}
