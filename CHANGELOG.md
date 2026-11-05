@@ -7,13 +7,13 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 ### Added
 
 - **Show last opened** view option that adds a relative timestamp to each row.
-- Right-click opens the standard file menu, and entries can be dragged into notes or panes.
+- Right-click opens the standard file menu, and entries can be dragged into notes as links.
 - Invalid regular expressions in exclusion settings are listed under the setting.
 
 ### Changed
 
 - Property values render with Bases' native renderer (clickable links, tags, dates).
-- **Max items** is now labelled **Max items per group** to match its behaviour.
+- **Max items** caps the whole view instead of each group separately.
 - Default **Max tracked files** raised from 50 to 500.
 - **File edited** tracking only counts edits to the active file.
 

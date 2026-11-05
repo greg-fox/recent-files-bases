@@ -9,7 +9,7 @@ The plugin tracks the files you open (or, optionally, edit) in a small internal 
 - Shows only files that are both in your recent list **and** pass the Base's own filters. Point a Base at a folder, tag, or property filter, add the Recent files view, and you get a recency-ordered list scoped to that filter.
 - Sorts strictly by recency, most recent first, regardless of the Base's configured sort.
 - Displays whichever properties you've selected in the Base's Properties menu, same as other Bases views.
-- Supports a per-view **Max items per group** slider (view options, top-right of the Bases toolbar) to cap how many entries are shown. When the Base is grouped, the cap applies to each group separately, so a view with 3 groups and a cap of 10 can show up to 30 entries.
+- Supports a per-view **Max items** slider (view options, top-right of the Bases toolbar) to cap how many entries are shown. The cap applies to the whole view: when the Base is grouped, the most recent entries across all groups are kept.
 - Optional **Show last opened** toggle (view options) adds a relative timestamp to each row, such as "5m ago". Hover it for the full date and time.
 - Links open on click; Cmd/Ctrl-click (or middle-click) opens in a new tab, and hovering shows Obsidian's native link preview.
 

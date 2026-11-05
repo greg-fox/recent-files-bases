@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { orderByRecency } from "./orderByRecency";
+import { orderByRecency, orderGroupsByRecency } from "./orderByRecency";
 
 interface Item {
 	path: string;
@@ -58,5 +58,26 @@ describe("orderByRecency", () => {
 
 	it("returns an empty array when there is no overlap", () => {
 		expect(orderByRecency([{ path: "a.md" }], [{ path: "b.md", label: "b" }], getPath, 10)).toEqual([]);
+	});
+});
+
+describe("orderGroupsByRecency", () => {
+	const recentFiles = [{ path: "a.md" }, { path: "b.md" }, { path: "c.md" }, { path: "d.md" }];
+	const item = (path: string): Item => ({ path, label: path });
+	const paths = (groups: Item[][]) => groups.map((group) => group.map((i) => i.path));
+
+	it("caps the total across groups, keeping the most recent overall", () => {
+		const groups = [[item("d.md"), item("b.md")], [item("c.md"), item("a.md")]];
+		expect(paths(orderGroupsByRecency(recentFiles, groups, getPath, 2))).toEqual([["b.md"], ["a.md"]]);
+	});
+
+	it("returns an empty group when none of its entries make the cut", () => {
+		const groups = [[item("d.md")], [item("a.md"), item("b.md")]];
+		expect(paths(orderGroupsByRecency(recentFiles, groups, getPath, 2))).toEqual([[], ["a.md", "b.md"]]);
+	});
+
+	it("keeps everything when the cap exceeds the total", () => {
+		const groups = [[item("c.md")], [item("a.md")]];
+		expect(paths(orderGroupsByRecency(recentFiles, groups, getPath, 10))).toEqual([["c.md"], ["a.md"]]);
 	});
 });
