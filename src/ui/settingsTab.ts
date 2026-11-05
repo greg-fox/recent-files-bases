@@ -50,7 +50,7 @@ export class RecentFilesBasesSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Track recency on")
-			.setDesc("Update the recent list when a file is opened, or when its content changes.")
+			.setDesc("Update the recent list when a file is opened, or when you edit the active file.")
 			.addDropdown((dropdown) => {
 				dropdown
 					.addOption("file-open" satisfies RecentFilesUpdateTrigger, "File opened")
