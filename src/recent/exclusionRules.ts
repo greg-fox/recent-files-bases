@@ -1,20 +1,17 @@
 export interface ExclusionCandidate {
 	path: string;
 	tags: string[];
-	isBookmarked: boolean;
 }
 
 export interface ExclusionRules {
 	omittedPathPatterns: string[];
 	omittedTagPatterns: string[];
-	omitBookmarkedFiles: boolean;
 }
 
 /** Exclusion rules with their regex patterns compiled once, ready for repeated matching. */
 export interface CompiledExclusionRules {
 	pathRegexes: RegExp[];
 	tagRegexes: RegExp[];
-	omitBookmarkedFiles: boolean;
 }
 
 function toValidRegexes(patterns: string[]): RegExp[] {
@@ -36,7 +33,6 @@ export function compileExclusionRules(rules: ExclusionRules): CompiledExclusionR
 	return {
 		pathRegexes: toValidRegexes(rules.omittedPathPatterns),
 		tagRegexes: toValidRegexes(rules.omittedTagPatterns),
-		omitBookmarkedFiles: rules.omitBookmarkedFiles,
 	};
 }
 
@@ -57,7 +53,6 @@ export function findInvalidPatterns(patterns: string[]): string[] {
 
 /** Whether a candidate file should be kept out of the tracked recent-files list. */
 export function isExcluded(candidate: ExclusionCandidate, rules: CompiledExclusionRules): boolean {
-	if (rules.omitBookmarkedFiles && candidate.isBookmarked) return true;
 	if (rules.pathRegexes.some((re) => re.test(candidate.path))) return true;
 	return rules.tagRegexes.length > 0 && candidate.tags.some((tag) => rules.tagRegexes.some((re) => re.test(tag)));
 }

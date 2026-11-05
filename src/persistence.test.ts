@@ -15,9 +15,12 @@ describe("sanitizeSettings", () => {
 			updateOn: "file-edit",
 			omittedPathPatterns: ["^daily/"],
 			omittedTagPatterns: ["^archive$"],
-			omitBookmarkedFiles: true,
 		};
 		expect(sanitizeSettings(stored)).toEqual(stored);
+	});
+
+	it("drops settings that no longer exist, such as omitBookmarkedFiles", () => {
+		expect(sanitizeSettings({ omitBookmarkedFiles: true })).toEqual(DEFAULT_SETTINGS);
 	});
 
 	it("falls back per field on bad values", () => {
@@ -26,7 +29,6 @@ describe("sanitizeSettings", () => {
 			updateOn: "sometimes",
 			omittedPathPatterns: "^daily/",
 			omittedTagPatterns: ["ok", 3],
-			omitBookmarkedFiles: "yes",
 		});
 		expect(result).toEqual({ ...DEFAULT_SETTINGS, omittedTagPatterns: ["ok"] });
 	});

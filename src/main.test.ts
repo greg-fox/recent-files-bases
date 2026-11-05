@@ -20,7 +20,7 @@ type Handler = (...args: unknown[]) => unknown;
 const makeFile = (path: string): TFile => new (TFile as unknown as new (path: string) => TFile)(path);
 
 /** A fake App that records event handlers so tests can fire vault/workspace events directly. */
-function createHarness(options: { files?: string[]; tags?: Record<string, string[]>; bookmarks?: string[] } = {}) {
+function createHarness(options: { files?: string[]; tags?: Record<string, string[]> } = {}) {
 	const handlers = new Map<string, Handler>();
 	const files = new Map((options.files ?? []).map((path) => [path, makeFile(path)]));
 	let activeFile: TFile | null = null;
@@ -35,10 +35,6 @@ function createHarness(options: { files?: string[]; tags?: Record<string, string
 		vault: { on, getFileByPath: (path: string) => files.get(path) ?? null },
 		metadataCache: {
 			getFileCache: (file: TFile) => ({ frontmatter: { tags: options.tags?.[file.path] ?? [] } }),
-		},
-		internalPlugins: {
-			getEnabledPluginById: (id: string) =>
-				id === "bookmarks" ? { items: (options.bookmarks ?? []).map((path) => ({ path })) } : null,
 		},
 	};
 
@@ -141,15 +137,14 @@ describe("tracking on file open", () => {
 		expect(h.paths()).toEqual([]);
 	});
 
-	it("does not track files matching a path, tag, or bookmark exclusion", async () => {
-		const h = createHarness({ tags: { "t.md": ["archive"] }, bookmarks: ["b.md"] });
+	it("does not track files matching a path or tag exclusion", async () => {
+		const h = createHarness({ tags: { "t.md": ["archive"] } });
 		await h.plugin.onload();
 		h.plugin.settings.omittedPathPatterns = ["^daily/"];
 		h.plugin.settings.omittedTagPatterns = ["^archive$"];
-		h.plugin.settings.omitBookmarkedFiles = true;
 		await h.plugin.saveSettings();
 
-		for (const path of ["daily/today.md", "t.md", "b.md", "keep.md"]) {
+		for (const path of ["daily/today.md", "t.md", "keep.md"]) {
 			await h.fire("file-open", h.file(path));
 		}
 		expect(h.paths()).toEqual(["keep.md"]);

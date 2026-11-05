@@ -8,7 +8,6 @@ describe("DEFAULT_SETTINGS", () => {
 			updateOn: "file-open",
 			omittedPathPatterns: [],
 			omittedTagPatterns: [],
-			omitBookmarkedFiles: false,
 		});
 	});
 });

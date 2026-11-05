@@ -85,3 +85,19 @@ export function parsePropertyId(id: string): { type: string; name: string } {
 	const dot = id.indexOf(".");
 	return { type: id.slice(0, dot), name: id.slice(dot + 1) };
 }
+
+/**
+ * Simplified getAllTags: frontmatter `tags` (string or list) plus inline tags, all with a "#"
+ * prefix, matching the real function's output shape. Real parsing details are Obsidian's concern.
+ */
+export function getAllTags(cache: {
+	frontmatter?: { tags?: unknown };
+	tags?: { tag: string }[];
+}): string[] | null {
+	const raw = cache.frontmatter?.tags;
+	const fromFrontmatter = (Array.isArray(raw) ? raw : raw == null ? [] : [raw]).map((tag) =>
+		String(tag).startsWith("#") ? String(tag) : `#${String(tag)}`,
+	);
+	const tags = [...fromFrontmatter, ...(cache.tags ?? []).map((t) => t.tag)];
+	return tags.length > 0 ? tags : null;
+}

@@ -22,7 +22,7 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 - Open views refresh as soon as the recent list changes.
 - Editing exclusion patterns no longer deletes history; exclusions apply when the list is read.
 - Middle-click opens entries in a new tab.
-- Comma- or space-separated and `#`-prefixed frontmatter tags are matched by tag exclusions.
+- Tag exclusions use Obsidian's `getAllTags`, so every frontmatter tag format is matched.
 - Lowering **Max tracked files** trims the list immediately.
 - Rows stay clickable when **file name** is hidden.
 - Malformed data in `data.json` falls back to defaults instead of breaking the plugin.
@@ -39,7 +39,7 @@ Initial release.
 - Respects the Base's grouping and selected properties.
 - **Max items** view option to cap the number of entries shown.
 - Click to open, Cmd/Ctrl-click to open in a new tab, and hover for a link preview.
-- Settings for **Max tracked files**, **Track recency on** (file opened or file edited), **Omitted path patterns**, **Omitted tag patterns**, and **Omit bookmarked files**.
+- Settings for **Max tracked files**, **Track recency on** (file opened or file edited), **Omitted path patterns**, and **Omitted tag patterns**.
 - Recency is stored in the plugin's own data file. The plugin never writes to notes.
 
 [Unreleased]: https://github.com/greg-fox/recent-files-bases/compare/1.0.0...HEAD
