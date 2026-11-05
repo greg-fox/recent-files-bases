@@ -114,7 +114,9 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 			if (renderedAny) {
 				itemEl.createSpan({ cls: "recent-files-bases-separator", text: " · " });
 			}
-			itemEl.createSpan({ cls: "recent-files-bases-property", text: value.toString() });
+			// renderTo gives links, tags, lists, and dates the same rendering as the built-in views.
+			const propertyEl = itemEl.createSpan({ cls: "recent-files-bases-property" });
+			value.renderTo(propertyEl, app.renderContext);
 			renderedAny = true;
 		}
 
