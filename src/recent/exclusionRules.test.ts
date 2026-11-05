@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { isExcluded, type ExclusionRules } from "./exclusionRules";
+import {
+	compileExclusionRules,
+	isExcluded as isExcludedCompiled,
+	type ExclusionCandidate,
+	type ExclusionRules,
+} from "./exclusionRules";
+
+const isExcluded = (candidate: ExclusionCandidate, rules: ExclusionRules) =>
+	isExcludedCompiled(candidate, compileExclusionRules(rules));
 
 const noRules: ExclusionRules = {
 	omittedPathPatterns: [],
@@ -45,5 +53,11 @@ describe("isExcluded", () => {
 	it("ignores blank pattern lines", () => {
 		const rules = { ...noRules, omittedPathPatterns: ["", "   "] };
 		expect(isExcluded({ path: "a.md", tags: [], isBookmarked: false }, rules)).toBe(false);
+	});
+
+	it("compiles valid patterns once and drops invalid ones", () => {
+		const compiled = compileExclusionRules({ ...noRules, omittedPathPatterns: ["^a", "[", " "], omittedTagPatterns: ["x"] });
+		expect(compiled.pathRegexes.map((re) => re.source)).toEqual(["^a"]);
+		expect(compiled.tagRegexes.map((re) => re.source)).toEqual(["x"]);
 	});
 });
