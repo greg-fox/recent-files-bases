@@ -2,6 +2,7 @@ import { BasesView, Keymap, parsePropertyId } from "obsidian";
 import type { BasesEntry, BasesPropertyId, BasesViewRegistration, HoverParent, HoverPopover, QueryController } from "obsidian";
 import type { RecentFileEntry } from "../types";
 import { orderByRecency } from "./orderByRecency";
+import { makeFileDraggable, showFileMenu } from "../ui/fileInteractions";
 import { DEFAULT_MAX_ITEMS, MAX_ITEMS_OPTION_KEY, MAX_MAX_ITEMS, MIN_MAX_ITEMS, resolveMaxItems } from "./maxItemsOption";
 
 export const RECENT_FILES_BASES_VIEW_TYPE = "recent-files-list";
@@ -78,6 +79,8 @@ export class RecentFilesBasesView extends BasesView implements HoverParent {
 	private renderEntry(listEl: HTMLElement, entry: BasesEntry, properties: BasesPropertyId[]): void {
 		const { app } = this;
 		const itemEl = listEl.createEl("li", { cls: "recent-files-bases-item" });
+		itemEl.addEventListener("contextmenu", (evt) => showFileMenu(app, entry.file, evt));
+		makeFileDraggable(app, itemEl, entry.file);
 
 		let renderedAny = false;
 		for (const propertyId of properties) {
