@@ -25,7 +25,7 @@ export function createRecentFilesBasesViewRegistration(source: RecentFilesSource
 			{
 				type: "slider",
 				key: MAX_ITEMS_OPTION_KEY,
-				displayName: "Max items",
+				displayName: "Max items per group",
 				default: DEFAULT_MAX_ITEMS,
 				min: MIN_MAX_ITEMS,
 				max: MAX_MAX_ITEMS,
