@@ -1,7 +1,9 @@
 name: Release Obsidian plugin
 
 # Push a tag that exactly matches manifest.json's version (no leading "v") to build and
-# attach main.js, manifest.json, and styles.css to a draft GitHub release.
+# attach main.js, manifest.json, and styles.css to a draft GitHub release. Each asset gets a
+# signed build provenance attestation, verifiable with:
+#   gh attestation verify main.js --repo greg-fox/recent-files-bases
 on:
     push:
         tags:
@@ -12,6 +14,8 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: write
+            id-token: write
+            attestations: write
 
         steps:
             - uses: actions/checkout@v4
@@ -38,6 +42,14 @@ jobs:
             - run: npm run lint
             - run: npm test
             - run: npm run build
+
+            - name: Attest build provenance
+              uses: actions/attest-build-provenance@v4
+              with:
+                  subject-path: |
+                      main.js
+                      manifest.json
+                      styles.css
 
             - name: Create draft release
               env:

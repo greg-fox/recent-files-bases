@@ -40,7 +40,7 @@ Source lives in `src/`. Pure logic (the recency store, exclusion rules, tag look
 1. Bump `version` in `manifest.json` and add the matching entry to `versions.json` (`npm version <x.y.z>` does both).
 2. Move the **Unreleased** notes in `CHANGELOG.md` under the new version.
 3. Push a tag that exactly matches the version, with no leading `v`: `git tag 1.0.0 && git push origin 1.0.0`.
-4. The **Release Obsidian plugin** workflow checks the tag against `manifest.json` and `versions.json`, runs lint, tests, and the build, then creates a draft GitHub release with `main.js`, `manifest.json`, and `styles.css` attached.
+4. The **Release Obsidian plugin** workflow checks the tag against `manifest.json` and `versions.json`, runs lint, tests, and the build, signs a build provenance attestation for each asset, then creates a draft GitHub release with `main.js`, `manifest.json`, and `styles.css` attached. Verify a downloaded asset with `gh attestation verify main.js --repo greg-fox/recent-files-bases`.
 5. Review the draft on GitHub and publish it.
 
 ## Manually installing

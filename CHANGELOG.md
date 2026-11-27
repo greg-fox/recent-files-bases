@@ -4,6 +4,12 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 
 ## [Unreleased]
 
+## [1.0.1]
+
+### Added
+
+- Release assets (`main.js`, `manifest.json`, `styles.css`) include signed GitHub build provenance attestations. Verify a download with `gh attestation verify main.js --repo greg-fox/recent-files-bases`.
+
 ## [1.0.0]
 
 Initial release.
@@ -29,5 +35,6 @@ Initial release.
 - Malformed data in `data.json` falls back to defaults instead of breaking the plugin.
 - When Obsidian is too old to support plugin Bases views, a notice says so.
 
-[Unreleased]: https://github.com/greg-fox/recent-files-bases/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/greg-fox/recent-files-bases/compare/1.0.1...HEAD
+[1.0.1]: https://github.com/greg-fox/recent-files-bases/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/greg-fox/recent-files-bases/releases/tag/1.0.0
