@@ -4,9 +4,12 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 
 ## [Unreleased]
 
+## [1.0.1]
+
 ### Added
 
 - All plugin settings (**Max tracked files**, **Track recency on**, **Omitted path patterns**, **Omitted tag patterns**, and **Clear history**) now appear in Obsidian's settings search on Obsidian 1.13.0 and later. Older versions keep the existing settings tab.
+- Release assets (`main.js`, `manifest.json`, `styles.css`) include signed GitHub build provenance attestations. Verify a download with `gh attestation verify main.js --repo greg-fox/recent-files-bases`.
 
 ### Changed
 
@@ -37,5 +40,6 @@ Initial release.
 - Malformed data in `data.json` falls back to defaults instead of breaking the plugin.
 - When Obsidian is too old to support plugin Bases views, a notice says so.
 
-[Unreleased]: https://github.com/greg-fox/recent-files-bases/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/greg-fox/recent-files-bases/compare/1.0.1...HEAD
+[1.0.1]: https://github.com/greg-fox/recent-files-bases/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/greg-fox/recent-files-bases/releases/tag/1.0.0
