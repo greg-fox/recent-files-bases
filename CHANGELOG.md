@@ -4,33 +4,6 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 
 ## [Unreleased]
 
-### Added
-
-- **Clear history** setting, with a confirmation dialog, to empty the recent list.
-- **Show last opened** view option that adds a relative timestamp to each row. Timestamps refresh once a minute while the view is visible.
-- Right-click opens the standard file menu, and entries can be dragged into notes as links.
-- Invalid regular expressions in exclusion settings are listed under the setting.
-
-### Changed
-
-- Recent-list changes are written to disk in one batch about two seconds after the last change, and immediately when the app is hidden or the plugin unloads. This cuts disk writes and Sync uploads when opening several notes in a row.
-- Property values render with Bases' native renderer (clickable links, tags, dates).
-- **Max items** caps the whole view instead of each group separately.
-- Default **Max tracked files** raised from 50 to 500.
-- **File edited** tracking only counts edits to the active file.
-
-### Fixed
-
-- When Obsidian is too old for plugin Bases views, a notice says so instead of failing silently.
-- Open views refresh as soon as the recent list changes.
-- Editing exclusion patterns no longer deletes history; exclusions apply when the list is read.
-- Middle-click opens entries in a new tab.
-- Tag exclusions use Obsidian's `getAllTags`, so every frontmatter tag format is matched.
-- Lowering **Max tracked files** trims the list immediately.
-- Rows stay clickable when **file name** is hidden.
-- Malformed data in `data.json` falls back to defaults instead of breaking the plugin.
-- Renaming or deleting untracked files no longer rewrites the plugin's data file.
-
 ## [1.0.0]
 
 Initial release.
@@ -39,11 +12,22 @@ Initial release.
 
 - **Recent files** Bases view type, available from the view menu of any `.base` file.
 - The view lists files that are both recently opened and matched by the Base's filters, ordered by recency.
-- Respects the Base's grouping and selected properties.
-- **Max items** view option to cap the number of entries shown.
-- Click to open, Cmd/Ctrl-click to open in a new tab, and hover for a link preview.
-- Settings for **Max tracked files**, **Track recency on** (file opened or file edited), **Omitted path patterns**, and **Omitted tag patterns**.
+- Respects the Base's grouping and selected properties. Property values render with Bases' native renderer (clickable links, tags, dates).
+- **Max items** view option to cap the number of entries shown. The cap applies to the whole view, not to each group separately.
+- **Show last opened** view option that adds a relative timestamp to each row. Timestamps refresh once a minute while the view is visible.
+- Click to open, Cmd/Ctrl-click or middle-click to open in a new tab, and hover for a link preview. Rows stay clickable when **file name** is hidden.
+- Right-click opens the standard file menu, and entries can be dragged into notes as links.
+- Open views refresh as soon as the recent list changes.
+- Settings for **Max tracked files** (default 500), **Track recency on** (file opened, or edits to the active file), **Omitted path patterns**, and **Omitted tag patterns**.
+- Exclusion patterns apply when the list is read, so editing them never deletes history. Invalid regular expressions are listed under the setting.
+- Tag exclusions use Obsidian's `getAllTags`, so every frontmatter tag format is matched.
+- Lowering **Max tracked files** trims the list immediately.
+- **Clear history** setting, with a confirmation dialog, to empty the recent list.
 - Recency is stored in the plugin's own data file. The plugin never writes to notes.
+- Changes to the recent list are written to disk in one batch about two seconds after the last change, and immediately when the app is hidden or the plugin unloads. This reduces disk writes and Sync uploads when opening several notes in a row.
+- Renaming or deleting untracked files does not rewrite the plugin's data file.
+- Malformed data in `data.json` falls back to defaults instead of breaking the plugin.
+- When Obsidian is too old to support plugin Bases views, a notice says so.
 
 [Unreleased]: https://github.com/greg-fox/recent-files-bases/compare/1.0.0...HEAD
 [1.0.0]: https://github.com/greg-fox/recent-files-bases/releases/tag/1.0.0
