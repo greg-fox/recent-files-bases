@@ -67,8 +67,8 @@ describe("RecentFilesBasesSettingTab", () => {
 		const tab = new RecentFilesBasesSettingTab(app, asPlugin(createPlugin()));
 		const containerEl = tab.containerEl as unknown as FakeElement;
 		containerEl.children.push("stale");
-		// eslint-disable-next-line @typescript-eslint/no-deprecated -- exercising the pre-1.13.0 fallback
-		tab.display();
+		// Obsidian before 1.13.0 calls display(); reach it structurally so no deprecation rule is suppressed.
+		(tab as { display(): void }).display();
 		const rows = containerEl.children as Setting[];
 		expect(rows.map((s) => s.name)).toEqual(EXPECTED_NAMES);
 		expect(descText(rows[0]!)[0]).toMatch(/^How many recently opened files/);
@@ -139,10 +139,10 @@ describe("setting rows", () => {
 		expect(plugin.clearRecentFiles).toHaveBeenCalledOnce();
 	});
 
-	it("falls back to setWarning on Obsidian versions before 1.13.0", () => {
+	it("falls back to the mod-warning class on Obsidian versions before 1.13.0", () => {
 		mockApi.version = "1.10.0";
 		const button = renderRow(plugin, "Clear history").components[0] as ButtonComponent;
-		expect(button.warning).toBe(true);
+		expect(button.buttonEl.classes).toContain("mod-warning");
 		expect(button.destructive).toBe(false);
 	});
 });

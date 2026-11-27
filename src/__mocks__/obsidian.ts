@@ -135,7 +135,12 @@ export class DropdownComponent extends FakeValueComponent {
 export class ButtonComponent {
 	text = "";
 	destructive = false;
-	warning = false;
+	buttonEl = {
+		classes: [] as string[],
+		addClass(...cls: string[]): void {
+			this.classes.push(...cls);
+		},
+	};
 	clickHandler?: () => unknown;
 
 	setButtonText(text: string): this {
@@ -145,11 +150,6 @@ export class ButtonComponent {
 
 	setDestructive(): this {
 		this.destructive = true;
-		return this;
-	}
-
-	setWarning(): this {
-		this.warning = true;
 		return this;
 	}
 

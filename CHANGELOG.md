@@ -4,6 +4,12 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 
 ## [Unreleased]
 
+## [1.0.2]
+
+### Fixed
+
+- The **Clear history** button on Obsidian 1.10 to 1.12 is styled without calling the deprecated `setWarning()`, which the community directory scan rejects. The button looks the same as before.
+
 ## [1.0.1]
 
 ### Added
@@ -40,6 +46,7 @@ Initial release.
 - Malformed data in `data.json` falls back to defaults instead of breaking the plugin.
 - When Obsidian is too old to support plugin Bases views, a notice says so.
 
-[Unreleased]: https://github.com/greg-fox/recent-files-bases/compare/1.0.1...HEAD
+[Unreleased]: https://github.com/greg-fox/recent-files-bases/compare/1.0.2...HEAD
+[1.0.2]: https://github.com/greg-fox/recent-files-bases/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/greg-fox/recent-files-bases/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/greg-fox/recent-files-bases/releases/tag/1.0.0

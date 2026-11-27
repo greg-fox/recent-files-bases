@@ -1,7 +1,7 @@
 {
 	"id": "recent-files-bases",
 	"name": "Recent Files Bases",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "1.10.0",
 	"description": "View your recently opened files as a custom Bases view, filtered and sorted alongside the rest of your vault.",
 	"author": "Greg Fox",
