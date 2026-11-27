@@ -1,4 +1,5 @@
 import { Modal, Setting, type App } from "obsidian";
+import { markDestructive } from "./destructiveButton";
 
 export interface ConfirmOptions {
 	title: string;
@@ -27,13 +28,10 @@ export class ConfirmModal extends Modal {
 				button.buttonEl.focus();
 			})
 			.addButton((button) =>
-				button
-					.setButtonText(confirmText)
-					.setWarning()
-					.onClick(async () => {
-						this.close();
-						await onConfirm();
-					}),
+				markDestructive(button.setButtonText(confirmText)).onClick(async () => {
+					this.close();
+					await onConfirm();
+				}),
 			);
 	}
 

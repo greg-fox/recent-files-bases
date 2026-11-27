@@ -4,6 +4,14 @@ All notable changes to this plugin are documented here. Versions follow [Semanti
 
 ## [Unreleased]
 
+### Added
+
+- All plugin settings (**Max tracked files**, **Track recency on**, **Omitted path patterns**, **Omitted tag patterns**, and **Clear history**) now appear in Obsidian's settings search on Obsidian 1.13.0 and later. Older versions keep the existing settings tab.
+
+### Changed
+
+- Destructive buttons (**Clear history** and its confirmation) use Obsidian's destructive button style on 1.13.0 and later.
+
 ## [1.0.0]
 
 Initial release.
